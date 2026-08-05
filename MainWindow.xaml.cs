@@ -21,7 +21,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly ConfigurationStore _configurationStore = new();
     private readonly HeadlessManagerService _managerService;
     private readonly DispatcherTimer _refreshTimer;
+    private readonly Dictionary<Guid, Queue<ProcessLogEntry>> _logsByProfile = [];
     private ManagerProfile? _editingProfile;
+    private Guid? _viewedLogProfileId;
     private IReadOnlyList<double> _trendValues = new double[] { 0 };
     private IReadOnlyList<double> _comparisonValues = new double[] { 0, 0, 0, 0 };
     private bool _allowClose;
@@ -38,6 +40,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         _managerService = new HeadlessManagerService();
         _managerService.ActivityCreated += ManagerService_ActivityCreated;
+        _managerService.LogReceived += ManagerService_LogReceived;
         ActivityView = CollectionViewSource.GetDefaultView(Activities);
         ActivityView.Filter = FilterActivity;
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
@@ -151,6 +154,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         RefreshDashboard(addTrendSample: false);
     }
 
+    private void ManagerService_LogReceived(object? sender, ProcessLogEntry entry)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(() => ManagerService_LogReceived(sender, entry));
+            return;
+        }
+
+        if (!_logsByProfile.TryGetValue(entry.ProfileId, out var entries))
+        {
+            entries = new Queue<ProcessLogEntry>();
+            _logsByProfile[entry.ProfileId] = entries;
+        }
+
+        entries.Enqueue(entry);
+        while (entries.Count > 3000)
+        {
+            entries.Dequeue();
+        }
+
+        if (_viewedLogProfileId == entry.ProfileId && LogOverlay.Visibility == Visibility.Visible)
+        {
+            AppendLogText(FormatLogEntry(entry));
+        }
+    }
+
     private void RefreshDashboard(bool addTrendSample)
     {
         var running = Profiles.Count(profile => profile.Status == "Running");
@@ -197,6 +226,49 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             await _managerService.StopAsync(profile);
         }
+    }
+
+    private void ViewLog_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is not ManagerProfile profile)
+        {
+            return;
+        }
+
+        _viewedLogProfileId = profile.Id;
+        LogViewerTitle.Text = $"{profile.Name} · Process output";
+        LogViewerSubtitle.Text = profile.ProcessId is null
+            ? $"Status: {profile.Status} · No active PID"
+            : $"Status: {profile.Status} · PID {profile.ProcessId}";
+        LogOutputTextBox.Clear();
+
+        if (_logsByProfile.TryGetValue(profile.Id, out var entries) && entries.Count > 0)
+        {
+            LogOutputTextBox.Text = string.Concat(entries.Select(FormatLogEntry));
+            LogOutputTextBox.ScrollToEnd();
+        }
+        else
+        {
+            LogOutputTextBox.Text = "No captured output yet. Start this manager to begin streaming logs.\r\n";
+        }
+
+        LogOverlay.Visibility = Visibility.Visible;
+    }
+
+    private void ClearLog_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewedLogProfileId is Guid profileId && _logsByProfile.TryGetValue(profileId, out var entries))
+        {
+            entries.Clear();
+        }
+
+        LogOutputTextBox.Clear();
+    }
+
+    private void CloseLog_Click(object sender, RoutedEventArgs e)
+    {
+        LogOverlay.Visibility = Visibility.Collapsed;
+        _viewedLogProfileId = null;
     }
 
     private async void StartAll_Click(object sender, RoutedEventArgs e)
@@ -309,6 +381,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         Profiles.Remove(profile);
+        _logsByProfile.Remove(profile.Id);
         AddActivity(profile.Name, "Manager profile removed", "Info");
         await SaveProfilesAsync();
         RefreshDashboard(addTrendSample: false);
@@ -457,6 +530,34 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Event = message,
             Status = status
         });
+
+    private void AppendLogText(string text)
+    {
+        const int maximumCharacters = 2_000_000;
+        if (LogOutputTextBox.Text.StartsWith("No captured output yet.", StringComparison.Ordinal))
+        {
+            LogOutputTextBox.Clear();
+        }
+
+        LogOutputTextBox.AppendText(text);
+        if (LogOutputTextBox.Text.Length > maximumCharacters)
+        {
+            LogOutputTextBox.Text = LogOutputTextBox.Text[^maximumCharacters..];
+        }
+
+        LogOutputTextBox.ScrollToEnd();
+    }
+
+    private static string FormatLogEntry(ProcessLogEntry entry)
+    {
+        var prefix = $"{entry.Timestamp.LocalDateTime:HH:mm:ss.fff} [{entry.Source}] ";
+        var normalized = entry.Message.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+        var lines = normalized.Split('\n');
+        return string.Join(
+            Environment.NewLine,
+            lines.Select((line, index) => index == 0 ? prefix + line : new string(' ', prefix.Length) + line)) +
+            Environment.NewLine;
+    }
 
     private async void Window_Closing(object? sender, CancelEventArgs e)
     {

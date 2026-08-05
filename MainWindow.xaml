@@ -274,10 +274,11 @@
                                     <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="0.7*"/>
                                     <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="0.55*"/>
                                     <DataGridTextColumn Header="Uptime" Binding="{Binding Uptime}" Width="0.7*"/>
-                                    <DataGridTemplateColumn Header="Actions" Width="270">
+                                    <DataGridTemplateColumn Header="Actions" Width="350">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
+                                                    <Button Content="View" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Click="ViewLog_Click" Margin="0,0,6,0"/>
                                                     <Button Content="Start" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Click="StartManager_Click" Margin="0,0,6,0"/>
                                                     <Button Content="Stop" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Click="StopManager_Click" Margin="0,0,6,0"/>
                                                     <Button Content="Edit" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Click="EditManager_Click" Margin="0,0,6,0"/>
@@ -375,6 +376,48 @@
                         <Button Grid.Column="1" Content="Cancel" Style="{StaticResource SecondaryButtonStyle}" Margin="12,0,8,0" Click="CancelEditor_Click"/>
                         <Button Grid.Column="2" Content="Save manager" Style="{StaticResource PrimaryButtonStyle}" Click="SaveManager_Click"/>
                     </Grid>
+                </Grid>
+            </Border>
+        </Border>
+
+        <Border x:Name="LogOverlay" Grid.ColumnSpan="2" Background="#990F172A" Visibility="Collapsed">
+            <Border Background="White" CornerRadius="14" Padding="24" Margin="40"
+                    MaxWidth="1000" MaxHeight="700" MinHeight="480"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="LogViewerTitle" Text="Process output" FontSize="21" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LogViewerSubtitle" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="Clear" Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="12,0,8,0" VerticalAlignment="Center" Click="ClearLog_Click"/>
+                        <Button Grid.Column="2" Content="Close" Style="{StaticResource PrimaryButtonStyle}"
+                                VerticalAlignment="Center" Click="CloseLog_Click"/>
+                    </Grid>
+                    <TextBlock Grid.Row="1" Margin="0,16,0,10" Foreground="{StaticResource MutedBrush}" FontSize="11"
+                               Text="Sources: Manager lifecycle · stdout · stderr · BepInEx LogOutput.log · Headless.log"/>
+                    <Border Grid.Row="2" Background="#0F172A" CornerRadius="9" BorderBrush="#263248" BorderThickness="1">
+                        <TextBox x:Name="LogOutputTextBox"
+                                 Background="Transparent" Foreground="#D1FAE5" CaretBrush="White"
+                                 BorderThickness="0" Padding="15" FontFamily="Cascadia Mono,Consolas"
+                                 FontSize="12" IsReadOnly="True" AcceptsReturn="True" AcceptsTab="True"
+                                 TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto"
+                                 HorizontalScrollBarVisibility="Auto"/>
+                    </Border>
+                    <TextBlock Grid.Row="3" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="11"
+                               Text="Output is kept in memory for this application session and capped per manager."/>
                 </Grid>
             </Border>
         </Border>

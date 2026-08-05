@@ -62,10 +62,18 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         try
         {
             ValidateProfile(profile);
+            var normalizedInstallDirectory = NormalizeDirectory(profile.InstallDirectory);
+            if (_processes.Values.Any(managed =>
+                    string.Equals(managed.InstallDirectory, normalizedInstallDirectory, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException(
+                    "Another running manager is already using this SPT directory. Use a separate install directory so process logs remain isolated.");
+            }
+
             await EnsureBackendAvailableAsync(profile.BackendUrl);
             try
             {
-                ArchivePreviousLog(profile.InstallDirectory);
+                ArchivePreviousLogs(profile.InstallDirectory);
             }
             catch (IOException exception)
             {
@@ -119,11 +127,11 @@ public sealed class HeadlessManagerService : IAsyncDisposable
                 throw new InvalidOperationException("The operating system rejected the process start request.");
             }
 
+            var cancellation = new CancellationTokenSource();
+            _processes[profile.Id] = new ManagedProcess(process, cancellation, withGraphics, normalizedInstallDirectory);
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            var cancellation = new CancellationTokenSource();
-            _processes[profile.Id] = new ManagedProcess(process, cancellation, withGraphics);
             profile.ProcessId = process.Id;
             profile.StartedAt = DateTimeOffset.Now;
             profile.Status = "Running";
@@ -146,6 +154,26 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         }
         catch (Exception exception)
         {
+            if (_processes.Remove(profile.Id, out var failedProcess))
+            {
+                failedProcess.Cancellation.Cancel();
+                try
+                {
+                    if (!failedProcess.Process.HasExited)
+                    {
+                        failedProcess.Process.Kill(true);
+                        await failedProcess.Process.WaitForExitAsync();
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    // The process exited while the failed start was being cleaned up.
+                }
+
+                failedProcess.Process.Dispose();
+                failedProcess.Cancellation.Dispose();
+            }
+
             profile.Status = "Error";
             profile.ProcessId = null;
             FailedStarts++;
@@ -306,10 +334,18 @@ public sealed class HeadlessManagerService : IAsyncDisposable
 
     private static string Quote(string value) => $"\"{value.Replace("\"", "\\\"")}\"";
 
-    private static void ArchivePreviousLog(string installDirectory)
+    private static string NormalizeDirectory(string directory) =>
+        Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+    private static void ArchivePreviousLogs(string installDirectory)
     {
-        var logPath = Path.Combine(installDirectory, "BepInEx", "LogOutput.log");
-        if (File.Exists(logPath))
+        var logPaths = new[]
+        {
+            Path.Combine(installDirectory, "BepInEx", "LogOutput.log"),
+            Path.Combine(installDirectory, "Headless.log")
+        };
+
+        foreach (var logPath in logPaths.Where(File.Exists))
         {
             File.Move(logPath, Path.ChangeExtension(logPath, ".previous.log"), true);
         }
@@ -452,5 +488,9 @@ public sealed class HeadlessManagerService : IAsyncDisposable
 
     private delegate bool EnumWindowsCallback(IntPtr window, IntPtr parameter);
 
-    private sealed record ManagedProcess(Process Process, CancellationTokenSource Cancellation, bool WithGraphics);
+    private sealed record ManagedProcess(
+        Process Process,
+        CancellationTokenSource Cancellation,
+        bool WithGraphics,
+        string InstallDirectory);
 }
