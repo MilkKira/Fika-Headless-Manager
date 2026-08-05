@@ -20,7 +20,7 @@ public sealed class ManagerProfile : INotifyPropertyChanged
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>Gets or sets the display name.</summary>
-    public string Name { get; set; } = "新实例";
+    public string Name { get; set; } = "新的无头主机";
 
     /// <summary>Gets or sets the SPT installation directory.</summary>
     public string InstallDirectory { get; set; } = string.Empty;

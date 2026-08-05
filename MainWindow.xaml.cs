@@ -470,7 +470,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static string FormatLogEntry(ProcessLogEntry entry)
     {
-        var prefix = $"{entry.Timestamp.LocalDateTime:HH:mm:ss.fff} [{entry.Category}/{entry.Level}/{entry.Source}] ";
+        var labels = string.Equals(entry.Category, entry.Source, StringComparison.Ordinal)
+            ? $"{entry.Category}/{entry.Level}"
+            : $"{entry.Category}/{entry.Level}/{entry.Source}";
+        var prefix = $"{entry.Timestamp.LocalDateTime:HH:mm:ss.fff} [{labels}] ";
         var normalized = entry.Message.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
         var lines = normalized.Split('\n');
         return string.Join(
