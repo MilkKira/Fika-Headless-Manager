@@ -8,7 +8,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Threading;
 
 namespace FikaHeadlessManager;
@@ -27,7 +26,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private IReadOnlyList<double> _trendValues = new double[] { 0 };
     private IReadOnlyList<double> _comparisonValues = new double[] { 0, 0, 0, 0 };
     private bool _allowClose;
-    private string _revenue = "$0";
     private string _users = "0";
     private string _conversionRate = "—";
     private string _activeSessions = "0";
@@ -39,10 +37,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         InitializeComponent();
         _managerService = new HeadlessManagerService();
-        _managerService.ActivityCreated += ManagerService_ActivityCreated;
+        _managerService.StateChanged += ManagerService_StateChanged;
         _managerService.LogReceived += ManagerService_LogReceived;
-        ActivityView = CollectionViewSource.GetDefaultView(Activities);
-        ActivityView.Filter = FilterActivity;
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _refreshTimer.Tick += (_, _) => RefreshDashboard(addTrendSample: true);
         Loaded += MainWindow_Loaded;
@@ -53,19 +49,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     /// <summary>Gets the configured manager profiles.</summary>
     public ObservableCollection<ManagerProfile> Profiles { get; } = [];
-
-    /// <summary>Gets the recent lifecycle activity.</summary>
-    public ObservableCollection<ActivityEntry> Activities { get; } = [];
-
-    /// <summary>Gets the searchable activity collection view.</summary>
-    public ICollectionView ActivityView { get; }
-
-    /// <summary>Gets the projected revenue display value.</summary>
-    public string Revenue
-    {
-        get => _revenue;
-        private set => SetField(ref _revenue, value);
-    }
 
     /// <summary>Gets the configured user-profile count.</summary>
     public string Users
@@ -103,7 +86,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>Gets the lifecycle comparison labels.</summary>
-    public IReadOnlyList<string> ComparisonLabels { get; } = new[] { "Started", "Failed", "Running", "Stopped" };
+    public IReadOnlyList<string> ComparisonLabels { get; } = new[] { "启动成功", "启动失败", "运行中", "已停止" };
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
@@ -117,7 +100,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 {
                     profiles = new[] { imported };
                     await _configurationStore.SaveAsync(profiles);
-                    AddActivity(imported.Name, "Imported legacy HeadlessConfig.json", "Success");
                 }
             }
 
@@ -128,7 +110,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception exception)
         {
-            AddActivity("Application", $"Could not load saved profiles: {exception.Message}", "Error");
+            ShowError($"无法加载已保存的实例：{exception.Message}");
         }
 
         RefreshDashboard(addTrendSample: true);
@@ -136,21 +118,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _refreshTimer.Start();
     }
 
-    private void ManagerService_ActivityCreated(object? sender, ActivityEntry entry)
+    private void ManagerService_StateChanged(object? sender, EventArgs e)
     {
         if (!Dispatcher.CheckAccess())
         {
-            Dispatcher.Invoke(() => ManagerService_ActivityCreated(sender, entry));
+            Dispatcher.Invoke(() => ManagerService_StateChanged(sender, e));
             return;
         }
 
-        Activities.Insert(0, entry);
-        while (Activities.Count > 200)
-        {
-            Activities.RemoveAt(Activities.Count - 1);
-        }
-
-        ActivityView.Refresh();
         RefreshDashboard(addTrendSample: false);
     }
 
@@ -190,7 +165,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ConversionRate = attempts == 0
             ? "—"
             : ((double)_managerService.SuccessfulStarts / attempts).ToString("P0");
-        Revenue = "$0";
         ComparisonValues = new double[]
         {
             _managerService.SuccessfulStarts,
@@ -209,7 +183,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             profile.RefreshUptime();
         }
 
-        LastUpdatedText.Text = $"Updated {DateTime.Now:HH:mm:ss}";
+        LastUpdatedText.Text = $"更新于 {DateTime.Now:HH:mm:ss}";
     }
 
     private async void StartManager_Click(object sender, RoutedEventArgs e)
@@ -236,10 +210,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         _viewedLogProfileId = profile.Id;
-        LogViewerTitle.Text = $"{profile.Name} · Process output";
+        LogViewerTitle.Text = $"{profile.Name} · 实时输出";
         LogViewerSubtitle.Text = profile.ProcessId is null
-            ? $"Status: {profile.Status} · No active PID"
-            : $"Status: {profile.Status} · PID {profile.ProcessId}";
+            ? $"状态：{profile.StatusDisplay} · 当前无活动进程"
+            : $"状态：{profile.StatusDisplay} · 进程 ID {profile.ProcessId}";
         LogOutputTextBox.Clear();
 
         if (_logsByProfile.TryGetValue(profile.Id, out var entries) && entries.Count > 0)
@@ -249,20 +223,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         else
         {
-            LogOutputTextBox.Text = "No captured output yet. Start this manager to begin streaming logs.\r\n";
+            LogOutputTextBox.Text = "暂无实时输出。启动该实例后将在这里显示日志。\r\n";
         }
 
         LogOverlay.Visibility = Visibility.Visible;
-    }
-
-    private void ClearLog_Click(object sender, RoutedEventArgs e)
-    {
-        if (_viewedLogProfileId is Guid profileId && _logsByProfile.TryGetValue(profileId, out var entries))
-        {
-            entries.Clear();
-        }
-
-        LogOutputTextBox.Clear();
     }
 
     private void CloseLog_Click(object sender, RoutedEventArgs e)
@@ -290,8 +254,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void AddManager_Click(object sender, RoutedEventArgs e)
     {
         _editingProfile = null;
-        EditorTitle.Text = "Add manager";
-        NameInput.Text = $"Headless {Profiles.Count + 1}";
+        EditorTitle.Text = "添加实例";
+        NameInput.Text = $"无头实例 {Profiles.Count + 1}";
         DirectoryInput.Text = string.Empty;
         ProfileInput.Text = string.Empty;
         BackendInput.Text = "https://127.0.0.1:6969/";
@@ -312,12 +276,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (profile.Status is not ("Stopped" or "Error"))
         {
-            AddActivity(profile.Name, "Stop the manager before editing its configuration", "Info");
+            ShowWarning("请先停止该实例，再编辑其配置。");
             return;
         }
 
         _editingProfile = profile;
-        EditorTitle.Text = "Edit manager";
+        EditorTitle.Text = "编辑实例";
         NameInput.Text = profile.Name;
         DirectoryInput.Text = profile.InstallDirectory;
         ProfileInput.Text = profile.ProfileId;
@@ -353,13 +317,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (_editingProfile is null)
         {
             Profiles.Add(profile);
-            AddActivity(profile.Name, "Manager profile added", "Success");
         }
         else
         {
             var index = Profiles.IndexOf(_editingProfile);
             Profiles[index] = profile;
-            AddActivity(profile.Name, "Manager profile updated", "Success");
         }
 
         await SaveProfilesAsync();
@@ -376,13 +338,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (profile.Status is not ("Stopped" or "Error"))
         {
-            AddActivity(profile.Name, "Stop the manager before removing it", "Info");
+            ShowWarning("请先停止该实例，再将其移除。");
             return;
         }
 
         Profiles.Remove(profile);
         _logsByProfile.Remove(profile.Id);
-        AddActivity(profile.Name, "Manager profile removed", "Info");
         await SaveProfilesAsync();
         RefreshDashboard(addTrendSample: false);
     }
@@ -391,7 +352,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var dialog = new OpenFolderDialog
         {
-            Title = "Select the SPT installation directory",
+            Title = "选择 SPT 安装目录",
             InitialDirectory = Directory.Exists(DirectoryInput.Text) ? DirectoryInput.Text : Environment.CurrentDirectory
         };
         if (dialog.ShowDialog(this) == true)
@@ -402,35 +363,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void CancelEditor_Click(object sender, RoutedEventArgs e) => EditorOverlay.Visibility = Visibility.Collapsed;
 
-    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        SearchHint.Visibility = string.IsNullOrEmpty(SearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
-        ActivityView?.Refresh();
-    }
-
-    private bool FilterActivity(object item)
-    {
-        if (item is not ActivityEntry entry || string.IsNullOrWhiteSpace(SearchBox?.Text))
-        {
-            return true;
-        }
-
-        var search = SearchBox.Text.Trim();
-        return entry.ManagerName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-               entry.Event.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-               entry.Status.Contains(search, StringComparison.OrdinalIgnoreCase);
-    }
-
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e) => ApplyResponsiveLayout(e.NewSize.Width);
 
     private void ApplyResponsiveLayout(double windowWidth)
     {
         var compact = windowWidth < 1240;
         KpiGrid.RowDefinitions[1].Height = compact ? GridLength.Auto : new GridLength(0);
-        SetCardLayout(RevenueCard, 0, 0, compact ? new Thickness(0, 0, 8, 8) : new Thickness(0, 0, 8, 0));
-        SetCardLayout(UsersCard, 0, compact ? 1 : 1, compact ? new Thickness(8, 0, 0, 8) : new Thickness(8, 0, 8, 0));
-        SetCardLayout(ConversionCard, compact ? 1 : 0, compact ? 0 : 2, compact ? new Thickness(0, 8, 8, 0) : new Thickness(8, 0, 8, 0));
-        SetCardLayout(SessionsCard, compact ? 1 : 0, compact ? 1 : 3, compact ? new Thickness(8, 8, 0, 0) : new Thickness(8, 0, 0, 0));
+        SetCardLayout(UsersCard, 0, 0, compact ? new Thickness(0, 0, 8, 8) : new Thickness(0, 0, 8, 0));
+        SetCardLayout(ConversionCard, 0, 1, compact ? new Thickness(8, 0, 0, 8) : new Thickness(8, 0, 8, 0));
+        SetCardLayout(SessionsCard, compact ? 1 : 0, compact ? 0 : 2, compact ? new Thickness(0, 8, 0, 0) : new Thickness(8, 0, 0, 0));
+        Grid.SetColumnSpan(SessionsCard, compact ? 2 : 1);
 
         var stackCharts = windowWidth < 1100;
         ChartsGrid.ColumnDefinitions[0].Width = stackCharts ? new GridLength(1, GridUnitType.Star) : new GridLength(2, GridUnitType.Star);
@@ -458,27 +400,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(NameInput.Text) || string.IsNullOrWhiteSpace(DirectoryInput.Text) ||
             string.IsNullOrWhiteSpace(ProfileInput.Text) || string.IsNullOrWhiteSpace(BackendInput.Text))
         {
-            return "Name, install directory, profile ID, and backend URL are required.";
+            return "实例名称、安装目录、配置文件 ID 和后端地址均为必填项。";
         }
 
         if (!Uri.TryCreate(BackendInput.Text.Trim(), UriKind.Absolute, out _))
         {
-            return "Enter a valid absolute backend URL.";
+            return "请输入有效的绝对后端地址。";
         }
 
         if (!Directory.Exists(DirectoryInput.Text.Trim()))
         {
-            return "The selected install directory does not exist.";
+            return "所选安装目录不存在。";
         }
 
         if (!File.Exists(Path.Combine(DirectoryInput.Text.Trim(), "EscapeFromTarkov.exe")))
         {
-            return "EscapeFromTarkov.exe was not found in that directory.";
+            return "所选目录中未找到 EscapeFromTarkov.exe。";
         }
 
         if (!File.Exists(Path.Combine(DirectoryInput.Text.Trim(), "BepInEx", "plugins", "Fika", "Fika.Headless.dll")))
         {
-            return "Fika.Headless.dll was not found under BepInEx\\plugins\\Fika.";
+            return "BepInEx\\plugins\\Fika 目录中未找到 Fika.Headless.dll。";
         }
 
         return null;
@@ -492,7 +434,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception exception)
         {
-            AddActivity("Application", $"Could not save profiles: {exception.Message}", "Error");
+            ShowError($"无法保存实例配置：{exception.Message}");
         }
     }
 
@@ -513,7 +455,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return new ManagerProfile
         {
-            Name = string.IsNullOrWhiteSpace(settings.Title) ? "Imported headless" : settings.Title,
+            Name = string.IsNullOrWhiteSpace(settings.Title) ? "已导入的无头实例" : settings.Title,
             InstallDirectory = Environment.CurrentDirectory,
             ProfileId = settings.ProfileId,
             BackendUrl = settings.BackendUrl.ToString(),
@@ -522,19 +464,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         };
     }
 
-    private void AddActivity(string managerName, string message, string status) =>
-        ManagerService_ActivityCreated(this, new ActivityEntry
-        {
-            Timestamp = DateTimeOffset.Now,
-            ManagerName = managerName,
-            Event = message,
-            Status = status
-        });
-
     private void AppendLogText(string text)
     {
         const int maximumCharacters = 2_000_000;
-        if (LogOutputTextBox.Text.StartsWith("No captured output yet.", StringComparison.Ordinal))
+        if (LogOutputTextBox.Text.StartsWith("暂无实时输出。", StringComparison.Ordinal))
         {
             LogOutputTextBox.Clear();
         }
@@ -558,6 +491,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             lines.Select((line, index) => index == 0 ? prefix + line : new string(' ', prefix.Length) + line)) +
             Environment.NewLine;
     }
+
+    private void ShowWarning(string message) =>
+        MessageBox.Show(this, message, "Fika 无头管理器", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+    private void ShowError(string message) =>
+        MessageBox.Show(this, message, "Fika 无头管理器", MessageBoxButton.OK, MessageBoxImage.Error);
 
     private async void Window_Closing(object? sender, CancelEventArgs e)
     {

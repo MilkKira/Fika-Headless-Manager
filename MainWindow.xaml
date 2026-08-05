@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:FikaHeadlessManager.Controls"
         x:Name="Root"
-        Title="Fika Headless Manager"
+        Title="Fika 无头管理器"
         Width="1440" Height="900" MinWidth="960" MinHeight="680"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource PageBrush}"
@@ -30,27 +30,27 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="Fika Control" Foreground="White" FontSize="15" FontWeight="SemiBold"/>
-                        <TextBlock Text="Headless Manager" Foreground="#8C96A8" FontSize="10"/>
+                        <TextBlock Text="Fika 控制中心" Foreground="White" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="无头管理器" Foreground="#8C96A8" FontSize="10"/>
                     </StackPanel>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2">
-                    <TextBlock Text="WORKSPACE" Foreground="#6B7280" FontSize="10" FontWeight="Bold" Margin="10,0,0,10"/>
+                    <TextBlock Text="工作区" Foreground="#6B7280" FontSize="10" FontWeight="Bold" Margin="10,0,0,10"/>
                     <Border Background="#283044" CornerRadius="7" Padding="11,10" Margin="0,0,0,5">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="▦" Foreground="#A5B4FC" FontSize="17" Width="27"/>
-                            <TextBlock Text="Overview" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Text="总览" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="＋ Add manager" Margin="0,12,0,0"
+                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="＋ 添加实例" Margin="0,12,0,0"
                             Click="AddManager_Click"/>
-                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Start all" Margin="0,9,0,0"
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="全部启动" Margin="0,9,0,0"
                             Click="StartAll_Click"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="3" Margin="0,30,0,0">
-                    <TextBlock Text="MANAGED INSTANCES" Foreground="#6B7280" FontSize="10" FontWeight="Bold" Margin="10,0,0,10"/>
+                    <TextBlock Text="已管理实例" Foreground="#6B7280" FontSize="10" FontWeight="Bold" Margin="10,0,0,10"/>
                     <ItemsControl ItemsSource="{Binding Profiles, ElementName=Root}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -86,8 +86,8 @@
 
                 <Border Grid.Row="4" BorderBrush="#283044" BorderThickness="1" CornerRadius="8" Padding="11">
                     <StackPanel>
-                        <TextBlock Text="Console protection" Foreground="#A5B4FC" FontWeight="SemiBold" FontSize="11"/>
-                        <TextBlock Text="Manager and BepInEx windows are hidden automatically."
+                        <TextBlock Text="控制台隐藏" Foreground="#A5B4FC" FontWeight="SemiBold" FontSize="11"/>
+                        <TextBlock Text="自动隐藏管理器和 BepInEx 控制台窗口。"
                                    Foreground="#8C96A8" FontSize="10" TextWrapping="Wrap" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
@@ -105,20 +105,15 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Grid Width="330" Height="38" HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <TextBox x:Name="SearchBox" TextChanged="SearchBox_TextChanged" Padding="34,8,10,8"/>
-                        <TextBlock Text="⌕" Foreground="{StaticResource MutedBrush}" FontSize="19"
-                                   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="11,0,0,2" IsHitTestVisible="False"/>
-                        <TextBlock x:Name="SearchHint" Text="Search recent activity..." Foreground="#9CA3AF"
-                                   Margin="35,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
-                    </Grid>
+                    <TextBlock Text="Fika 无头实例控制台" FontSize="16" FontWeight="SemiBold"
+                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Width="36" Height="36" CornerRadius="18" Background="#EEF2FF">
                             <TextBlock Text="●" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="Administrator" FontWeight="SemiBold"/>
-                            <TextBlock Text="Local control" Foreground="{StaticResource MutedBrush}" FontSize="10"/>
+                            <TextBlock Text="管理员" FontWeight="SemiBold"/>
+                            <TextBlock Text="本地控制" Foreground="{StaticResource MutedBrush}" FontSize="10"/>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
@@ -134,8 +129,6 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="20"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="20"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0">
                         <Grid.ColumnDefinitions>
@@ -143,8 +136,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Analytics overview" FontSize="25" FontWeight="SemiBold"/>
-                            <TextBlock Text="Monitor and control every headless instance from one window."
+                            <TextBlock Text="运行概览" FontSize="25" FontWeight="SemiBold"/>
+                            <TextBlock Text="在一个窗口中监控并控制所有无头实例。"
                                        Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0"/>
                         </StackPanel>
                         <TextBlock Grid.Column="1" x:Name="LastUpdatedText" Foreground="{StaticResource MutedBrush}"
@@ -156,54 +149,41 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Border x:Name="RevenueCard" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0" MinHeight="128">
+                        <Border x:Name="UsersCard" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0" MinHeight="128">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="Revenue" Foreground="{StaticResource MutedBrush}"/>
-                                    <TextBlock Text="{Binding Revenue, ElementName=Root}" FontSize="26" FontWeight="SemiBold" Margin="0,9,0,5"/>
-                                    <TextBlock Text="No revenue source connected" Foreground="#10B981" FontSize="11"/>
-                                </StackPanel>
-                                <Border HorizontalAlignment="Right" VerticalAlignment="Top" Width="36" Height="36" CornerRadius="9" Background="#EEF2FF">
-                                    <TextBlock Text="$" Foreground="{StaticResource PrimaryBrush}" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
-                        <Border x:Name="UsersCard" Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0" MinHeight="128">
-                            <Grid>
-                                <StackPanel>
-                                    <TextBlock Text="Users" Foreground="{StaticResource MutedBrush}"/>
+                                    <TextBlock Text="实例数量" Foreground="{StaticResource MutedBrush}"/>
                                     <TextBlock Text="{Binding Users, ElementName=Root}" FontSize="26" FontWeight="SemiBold" Margin="0,9,0,5"/>
-                                    <TextBlock Text="Configured profiles" Foreground="#0284C7" FontSize="11"/>
+                                    <TextBlock Text="已配置的无头实例" Foreground="#0284C7" FontSize="11"/>
                                 </StackPanel>
                                 <Border HorizontalAlignment="Right" VerticalAlignment="Top" Width="36" Height="36" CornerRadius="9" Background="#E0F2FE">
                                     <TextBlock Text="♟" Foreground="#0284C7" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                             </Grid>
                         </Border>
-                        <Border x:Name="ConversionCard" Grid.Column="2" Style="{StaticResource CardStyle}" Margin="8,0" MinHeight="128">
+                        <Border x:Name="ConversionCard" Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0" MinHeight="128">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="Conversion rate" Foreground="{StaticResource MutedBrush}"/>
+                                    <TextBlock Text="启动成功率" Foreground="{StaticResource MutedBrush}"/>
                                     <TextBlock Text="{Binding ConversionRate, ElementName=Root}" FontSize="26" FontWeight="SemiBold" Margin="0,9,0,5"/>
-                                    <TextBlock Text="Successful starts" Foreground="#10B981" FontSize="11"/>
+                                    <TextBlock Text="本次运行的成功启动比例" Foreground="#10B981" FontSize="11"/>
                                 </StackPanel>
                                 <Border HorizontalAlignment="Right" VerticalAlignment="Top" Width="36" Height="36" CornerRadius="9" Background="#D1FAE5">
                                     <TextBlock Text="↗" Foreground="#059669" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                             </Grid>
                         </Border>
-                        <Border x:Name="SessionsCard" Grid.Column="3" Style="{StaticResource CardStyle}" Margin="8,0,0,0" MinHeight="128">
+                        <Border x:Name="SessionsCard" Grid.Column="2" Style="{StaticResource CardStyle}" Margin="8,0,0,0" MinHeight="128">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="Active sessions" Foreground="{StaticResource MutedBrush}"/>
+                                    <TextBlock Text="活跃会话" Foreground="{StaticResource MutedBrush}"/>
                                     <TextBlock Text="{Binding ActiveSessions, ElementName=Root}" FontSize="26" FontWeight="SemiBold" Margin="0,9,0,5"/>
-                                    <TextBlock Text="Live right now" Foreground="#F59E0B" FontSize="11"/>
+                                    <TextBlock Text="当前正在运行" Foreground="#F59E0B" FontSize="11"/>
                                 </StackPanel>
                                 <Border HorizontalAlignment="Right" VerticalAlignment="Top" Width="36" Height="36" CornerRadius="9" Background="#FEF3C7">
                                     <TextBlock Text="◉" Foreground="#D97706" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -228,8 +208,8 @@
                                     <RowDefinition Height="250"/>
                                 </Grid.RowDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="Session trends" FontSize="16" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Active headless sessions during the last minute" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
+                                    <TextBlock Text="会话趋势" FontSize="16" FontWeight="SemiBold"/>
+                                    <TextBlock Text="最近一分钟的活跃无头会话" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
                                 </StackPanel>
                                 <controls:AreaChart Grid.Row="1" Values="{Binding TrendValues, ElementName=Root}" Margin="0,14,0,0"/>
                             </Grid>
@@ -241,8 +221,8 @@
                                     <RowDefinition Height="250"/>
                                 </Grid.RowDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="Instance comparison" FontSize="16" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Lifecycle outcomes this session" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
+                                    <TextBlock Text="实例对比" FontSize="16" FontWeight="SemiBold"/>
+                                    <TextBlock Text="本次运行的生命周期结果" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
                                 </StackPanel>
                                 <controls:BarChart Grid.Row="1" Values="{Binding ComparisonValues, ElementName=Root}"
                                                    Labels="{Binding ComparisonLabels, ElementName=Root}" Margin="0,14,0,0"/>
@@ -262,27 +242,27 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="Managed instances" FontSize="16" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Start, stop, edit, or remove configured headless clients." Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
+                                    <TextBlock Text="已管理实例" FontSize="16" FontWeight="SemiBold"/>
+                                    <TextBlock Text="启动、停止、编辑或移除已配置的无头客户端。" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
                                 </StackPanel>
-                                <Button Grid.Column="1" Content="Stop all" Style="{StaticResource SecondaryButtonStyle}" Click="StopAll_Click"/>
+                                <Button Grid.Column="1" Content="全部停止" Style="{StaticResource SecondaryButtonStyle}" Click="StopAll_Click"/>
                             </Grid>
                             <DataGrid Grid.Row="1" ItemsSource="{Binding Profiles, ElementName=Root}" MinHeight="120" MaxHeight="260">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Manager" Binding="{Binding Name}" Width="1.2*"/>
-                                    <DataGridTextColumn Header="Backend" Binding="{Binding BackendUrl}" Width="1.6*"/>
-                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="0.7*"/>
-                                    <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="0.55*"/>
-                                    <DataGridTextColumn Header="Uptime" Binding="{Binding Uptime}" Width="0.7*"/>
-                                    <DataGridTemplateColumn Header="Actions" Width="350">
+                                    <DataGridTextColumn Header="实例" Binding="{Binding Name}" Width="1.2*"/>
+                                    <DataGridTextColumn Header="后端地址" Binding="{Binding BackendUrl}" Width="1.6*"/>
+                                    <DataGridTextColumn Header="状态" Binding="{Binding StatusDisplay}" Width="0.7*"/>
+                                    <DataGridTextColumn Header="进程 ID" Binding="{Binding ProcessId}" Width="0.55*"/>
+                                    <DataGridTextColumn Header="运行时间" Binding="{Binding Uptime}" Width="0.7*"/>
+                                    <DataGridTemplateColumn Header="操作" Width="350">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Button Content="View" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Click="ViewLog_Click" Margin="0,0,6,0"/>
-                                                    <Button Content="Start" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Click="StartManager_Click" Margin="0,0,6,0"/>
-                                                    <Button Content="Stop" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Click="StopManager_Click" Margin="0,0,6,0"/>
-                                                    <Button Content="Edit" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Click="EditManager_Click" Margin="0,0,6,0"/>
-                                                    <Button Content="Remove" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Click="RemoveManager_Click"/>
+                                                    <Button Content="查看" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Click="ViewLog_Click" Margin="0,0,6,0"/>
+                                                    <Button Content="启动" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Click="StartManager_Click" Margin="0,0,6,0"/>
+                                                    <Button Content="停止" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Click="StopManager_Click" Margin="0,0,6,0"/>
+                                                    <Button Content="编辑" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Click="EditManager_Click" Margin="0,0,6,0"/>
+                                                    <Button Content="移除" Tag="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Click="RemoveManager_Click"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
@@ -292,26 +272,6 @@
                         </Grid>
                     </Border>
 
-                    <Border Grid.Row="8" Style="{StaticResource CardStyle}" Padding="0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <StackPanel Margin="20,18,20,14">
-                                <TextBlock Text="Recent activity" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Latest lifecycle and validation events across all managers." Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0"/>
-                            </StackPanel>
-                            <DataGrid Grid.Row="1" ItemsSource="{Binding ActivityView, ElementName=Root}" MinHeight="190" MaxHeight="340">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Time" Binding="{Binding DisplayTime}" Width="150"/>
-                                    <DataGridTextColumn Header="Manager" Binding="{Binding ManagerName}" Width="1.1*"/>
-                                    <DataGridTextColumn Header="Activity" Binding="{Binding Event}" Width="2.4*"/>
-                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="0.7*"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </Grid>
-                    </Border>
                 </Grid>
             </ScrollViewer>
         </Grid>
@@ -325,8 +285,8 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <StackPanel>
-                        <TextBlock x:Name="EditorTitle" Text="Add manager" FontSize="21" FontWeight="SemiBold"/>
-                        <TextBlock Text="Configure one SPT installation and its Fika headless profile."
+                        <TextBlock x:Name="EditorTitle" Text="添加实例" FontSize="21" FontWeight="SemiBold"/>
+                        <TextBlock Text="配置一个 SPT 安装目录及其 Fika 无头配置。"
                                    Foreground="{StaticResource MutedBrush}" Margin="0,5,0,18"/>
                     </StackPanel>
                     <Grid Grid.Row="1">
@@ -342,39 +302,39 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <StackPanel Grid.ColumnSpan="3">
-                            <TextBlock Text="Manager name" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBlock Text="实例名称" FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <TextBox x:Name="NameInput"/>
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,14,0,0">
-                            <TextBlock Text="SPT install directory" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBlock Text="SPT 安装目录" FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <TextBox x:Name="DirectoryInput"/>
-                                <Button Grid.Column="1" Content="Browse" Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" Click="Browse_Click"/>
+                                <Button Grid.Column="1" Content="浏览" Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" Click="Browse_Click"/>
                             </Grid>
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,14,0,0">
-                            <TextBlock Text="Profile ID / token" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBlock Text="配置文件 ID / 令牌" FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <TextBox x:Name="ProfileInput"/>
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,14,0,0">
-                            <TextBlock Text="Backend URL" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBlock Text="后端地址" FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <TextBox x:Name="BackendInput"/>
                         </StackPanel>
                         <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,14,0,0">
-                            <TextBlock Text="Window title (optional)" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBlock Text="窗口标题（可选）" FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <TextBox x:Name="TitleInput"/>
                         </StackPanel>
                         <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,18,0,0">
-                            <CheckBox x:Name="AutoRestartInput" Content="Auto restart" IsChecked="True" Margin="0,0,0,8"/>
-                            <CheckBox x:Name="ExtraLoggingInput" Content="Extra file logging"/>
+                            <CheckBox x:Name="AutoRestartInput" Content="自动重启" IsChecked="True" Margin="0,0,0,8"/>
+                            <CheckBox x:Name="ExtraLoggingInput" Content="额外文件日志"/>
                         </StackPanel>
                     </Grid>
                     <Grid Grid.Row="2" Margin="0,24,0,0">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBlock x:Name="EditorError" Foreground="#DC2626" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                        <Button Grid.Column="1" Content="Cancel" Style="{StaticResource SecondaryButtonStyle}" Margin="12,0,8,0" Click="CancelEditor_Click"/>
-                        <Button Grid.Column="2" Content="Save manager" Style="{StaticResource PrimaryButtonStyle}" Click="SaveManager_Click"/>
+                        <Button Grid.Column="1" Content="取消" Style="{StaticResource SecondaryButtonStyle}" Margin="12,0,8,0" Click="CancelEditor_Click"/>
+                        <Button Grid.Column="2" Content="保存实例" Style="{StaticResource PrimaryButtonStyle}" Click="SaveManager_Click"/>
                     </Grid>
                 </Grid>
             </Border>
@@ -395,19 +355,16 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock x:Name="LogViewerTitle" Text="Process output" FontSize="21" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LogViewerTitle" Text="实时输出" FontSize="21" FontWeight="SemiBold"/>
                             <TextBlock x:Name="LogViewerSubtitle" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0"/>
                         </StackPanel>
-                        <Button Grid.Column="1" Content="Clear" Style="{StaticResource SecondaryButtonStyle}"
-                                Margin="12,0,8,0" VerticalAlignment="Center" Click="ClearLog_Click"/>
-                        <Button Grid.Column="2" Content="Close" Style="{StaticResource PrimaryButtonStyle}"
+                        <Button Grid.Column="1" Content="关闭" Style="{StaticResource PrimaryButtonStyle}"
                                 VerticalAlignment="Center" Click="CloseLog_Click"/>
                     </Grid>
                     <TextBlock Grid.Row="1" Margin="0,16,0,10" Foreground="{StaticResource MutedBrush}" FontSize="11"
-                               Text="Sources: Manager lifecycle · stdout · stderr · BepInEx LogOutput.log · Headless.log"/>
+                               Text="实时来源：管理器 · 标准输出 · 错误输出 · BepInEx LogOutput.log · Headless.log"/>
                     <Border Grid.Row="2" Background="#0F172A" CornerRadius="9" BorderBrush="#263248" BorderThickness="1">
                         <TextBox x:Name="LogOutputTextBox"
                                  Background="Transparent" Foreground="#D1FAE5" CaretBrush="White"
@@ -417,7 +374,7 @@
                                  HorizontalScrollBarVisibility="Auto"/>
                     </Border>
                     <TextBlock Grid.Row="3" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" FontSize="11"
-                               Text="Output is kept in memory for this application session and capped per manager."/>
+                               Text="输出仅在本次程序运行期间保存在内存中，每个实例最多保留 3000 条。"/>
                 </Grid>
             </Border>
         </Border>

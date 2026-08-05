@@ -20,7 +20,7 @@ public sealed class ManagerProfile : INotifyPropertyChanged
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>Gets or sets the display name.</summary>
-    public string Name { get; set; } = "New manager";
+    public string Name { get; set; } = "新实例";
 
     /// <summary>Gets or sets the SPT installation directory.</summary>
     public string InstallDirectory { get; set; } = string.Empty;
@@ -45,8 +45,26 @@ public sealed class ManagerProfile : INotifyPropertyChanged
     public string Status
     {
         get => _status;
-        internal set => SetField(ref _status, value);
+        internal set
+        {
+            if (SetField(ref _status, value))
+            {
+                OnPropertyChanged(nameof(StatusDisplay));
+            }
+        }
     }
+
+    /// <summary>Gets the localized lifecycle status displayed by the user interface.</summary>
+    [JsonIgnore]
+    public string StatusDisplay => Status switch
+    {
+        "Starting" => "启动中",
+        "Running" => "运行中",
+        "Stopping" => "停止中",
+        "Restarting" => "重启中",
+        "Error" => "错误",
+        _ => "已停止"
+    };
 
     /// <summary>Gets the operating-system process identifier when running.</summary>
     [JsonIgnore]
@@ -83,8 +101,8 @@ public sealed class ManagerProfile : INotifyPropertyChanged
 
             var elapsed = DateTimeOffset.Now - StartedAt.Value;
             return elapsed.TotalHours >= 1
-                ? $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m"
-                : $"{elapsed.Minutes}m {elapsed.Seconds}s";
+                ? $"{(int)elapsed.TotalHours}小时 {elapsed.Minutes}分钟"
+                : $"{elapsed.Minutes}分 {elapsed.Seconds}秒";
         }
     }
 

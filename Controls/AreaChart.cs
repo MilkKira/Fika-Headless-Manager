@@ -116,7 +116,7 @@ public sealed class AreaChart : FrameworkElement
             drawingContext.DrawText(text, new Point(plot.Left - text.Width - 8, plot.Top + plot.Height * index / 4 - text.Height / 2));
         }
 
-        var labels = new[] { "-60s", "-45s", "-30s", "-15s", "Now" };
+        var labels = new[] { "-60秒", "-45秒", "-30秒", "-15秒", "现在" };
         for (var index = 0; index < labels.Length; index++)
         {
             var text = new FormattedText(labels[index], System.Globalization.CultureInfo.CurrentCulture,
@@ -128,7 +128,7 @@ public sealed class AreaChart : FrameworkElement
 
     private void DrawEmptyState(DrawingContext drawingContext, Rect plot)
     {
-        var text = new FormattedText("Waiting for session data", System.Globalization.CultureInfo.CurrentCulture,
+        var text = new FormattedText("等待会话数据", System.Globalization.CultureInfo.CurrentCulture,
             FlowDirection.LeftToRight, new Typeface("Segoe UI"), 12,
             new SolidColorBrush(Color.FromRgb(156, 163, 175)), VisualTreeHelper.GetDpi(this).PixelsPerDip);
         drawingContext.DrawText(text, new Point(plot.Left + (plot.Width - text.Width) / 2, plot.Top + (plot.Height - text.Height) / 2));

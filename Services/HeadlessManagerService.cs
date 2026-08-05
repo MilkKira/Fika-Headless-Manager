@@ -33,8 +33,8 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("responsecompressed", "0");
     }
 
-    /// <summary>Occurs when a lifecycle event should be added to the dashboard.</summary>
-    public event EventHandler<ActivityEntry>? ActivityCreated;
+    /// <summary>Occurs when a managed process changes lifecycle state.</summary>
+    public event EventHandler? StateChanged;
 
     /// <summary>Occurs when output is captured for a managed headless client.</summary>
     public event EventHandler<ProcessLogEntry>? LogReceived;
@@ -57,7 +57,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         }
 
         profile.Status = "Starting";
-        RaiseActivity(profile, "Validating installation and backend", "Info");
+        ReportManagerMessage(profile, "正在验证安装目录和后端服务。");
 
         try
         {
@@ -67,7 +67,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
                     string.Equals(managed.InstallDirectory, normalizedInstallDirectory, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new InvalidOperationException(
-                    "Another running manager is already using this SPT directory. Use a separate install directory so process logs remain isolated.");
+                    "另一个运行中的实例正在使用该 SPT 目录。请使用独立安装目录，以确保各进程日志互不混合。");
             }
 
             await EnsureBackendAvailableAsync(profile.BackendUrl);
@@ -77,7 +77,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
             }
             catch (IOException exception)
             {
-                RaiseActivity(profile, $"Previous BepInEx log could not be archived: {exception.Message}", "Info");
+                ReportManagerMessage(profile, $"无法归档上一次 BepInEx 日志：{exception.Message}");
             }
 
             var process = new Process
@@ -100,14 +100,14 @@ public sealed class HeadlessManagerService : IAsyncDisposable
             {
                 if (args.Data is not null)
                 {
-                    RaiseLog(profile, "stdout", args.Data);
+                    RaiseLog(profile, "标准输出", args.Data);
                 }
             };
             process.ErrorDataReceived += (_, args) =>
             {
                 if (args.Data is not null)
                 {
-                    RaiseLog(profile, "stderr", args.Data);
+                    RaiseLog(profile, "错误输出", args.Data);
                 }
             };
 
@@ -124,7 +124,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
             };
             if (!process.Start())
             {
-                throw new InvalidOperationException("The operating system rejected the process start request.");
+                throw new InvalidOperationException("操作系统拒绝了进程启动请求。");
             }
 
             var cancellation = new CancellationTokenSource();
@@ -136,7 +136,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
             profile.StartedAt = DateTimeOffset.Now;
             profile.Status = "Running";
             SuccessfulStarts++;
-            RaiseActivity(profile, $"Headless client started (PID {process.Id})", "Success");
+            ReportManagerMessage(profile, $"无头客户端已启动（进程 ID：{process.Id}）。");
             _ = HideWindowsLoopAsync(process, withGraphics, cancellation.Token);
             _ = TailLogFileAsync(
                 profile,
@@ -177,7 +177,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
             profile.Status = "Error";
             profile.ProcessId = null;
             FailedStarts++;
-            RaiseActivity(profile, exception.Message, "Error");
+            ReportManagerMessage(profile, exception.Message);
         }
     }
 
@@ -213,7 +213,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
             profile.ProcessId = null;
             profile.StartedAt = null;
             profile.Status = "Stopped";
-            RaiseActivity(profile, "Headless client stopped", "Info");
+            ReportManagerMessage(profile, "无头客户端已停止。");
         }
     }
 
@@ -265,7 +265,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         profile.ProcessId = null;
         profile.StartedAt = null;
         profile.Status = "Stopped";
-        RaiseActivity(profile, $"Headless client exited with code {exitCode}", exitCode == 0 ? "Info" : "Error");
+        ReportManagerMessage(profile, $"无头客户端已退出，退出代码：{exitCode}。");
 
         if (!_isDisposing && profile.AutoRestart)
         {
@@ -280,22 +280,22 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         if (string.IsNullOrWhiteSpace(profile.Name) || string.IsNullOrWhiteSpace(profile.InstallDirectory) ||
             string.IsNullOrWhiteSpace(profile.ProfileId) || string.IsNullOrWhiteSpace(profile.BackendUrl))
         {
-            throw new InvalidOperationException("Name, install directory, profile ID, and backend URL are required.");
+            throw new InvalidOperationException("实例名称、安装目录、配置文件 ID 和后端地址均为必填项。");
         }
 
         if (!File.Exists(Path.Combine(profile.InstallDirectory, "EscapeFromTarkov.exe")))
         {
-            throw new FileNotFoundException("EscapeFromTarkov.exe was not found in the selected install directory.");
+            throw new FileNotFoundException("所选安装目录中未找到 EscapeFromTarkov.exe。");
         }
 
         if (!File.Exists(Path.Combine(profile.InstallDirectory, "BepInEx", "plugins", "Fika", "Fika.Headless.dll")))
         {
-            throw new FileNotFoundException("BepInEx\\plugins\\Fika\\Fika.Headless.dll was not found.");
+            throw new FileNotFoundException("未找到 BepInEx\\plugins\\Fika\\Fika.Headless.dll。");
         }
 
         if (!Uri.TryCreate(profile.BackendUrl, UriKind.Absolute, out _))
         {
-            throw new InvalidOperationException("The backend URL is not a valid absolute URL.");
+            throw new InvalidOperationException("后端地址不是有效的绝对地址。");
         }
     }
 
@@ -305,7 +305,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         using var response = await _httpClient.GetAsync(new Uri(baseUri, "fika/presence/get"));
         if (!response.IsSuccessStatusCode)
         {
-            throw new HttpRequestException($"The Fika backend returned HTTP {(int)response.StatusCode}.");
+            throw new HttpRequestException($"Fika 后端返回了 HTTP {(int)response.StatusCode}。");
         }
     }
 
@@ -449,17 +449,10 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         }
     }
 
-    private void RaiseActivity(ManagerProfile profile, string message, string status)
+    private void ReportManagerMessage(ManagerProfile profile, string message)
     {
-        ActivityCreated?.Invoke(this, new ActivityEntry
-        {
-            Timestamp = DateTimeOffset.Now,
-            ManagerName = profile.Name,
-            Event = message,
-            Status = status
-        });
-
-        RaiseLog(profile, "Manager", message);
+        StateChanged?.Invoke(this, EventArgs.Empty);
+        RaiseLog(profile, "管理器", message);
     }
 
     private void RaiseLog(ManagerProfile profile, string source, string message) =>
