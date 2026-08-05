@@ -4,9 +4,7 @@
     <projectFile>FikaHeadlessManager.csproj</projectFile>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1acf0fe1-30bc-4396-a382-627a4a10a3f0" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/packages.lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages.lock.json" afterDir="false" />
-    </list>
+    <list default="true" id="1acf0fe1-30bc-4396-a382-627a4a10a3f0" name="更改" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -15,10 +13,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 3,
-  "fromUser": false
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3,
+  &quot;fromUser&quot;: false
+}</component>
   <component name="ProjectId" id="3HTnWWtW1B9mI0xCMuRGlMB8KdM" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -35,6 +33,7 @@
     "cidr.known.project.marker": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "master",
+    "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -69,6 +68,7 @@
       <option name="presentableId" value="Default" />
       <updated>1785900959288</updated>
       <workItem from="1785900961012" duration="28000" />
+      <workItem from="1785905981927" duration="122000" />
     </task>
     <servers />
   </component>

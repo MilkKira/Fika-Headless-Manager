@@ -137,7 +137,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
                 profile,
                 Path.Combine(profile.InstallDirectory, "BepInEx", "LogOutput.log"),
                 "BepInEx",
-                "BepInEx",
+                "LogOutput.log",
                 cancellation.Token);
             if (profile.ExtraLogging)
             {
