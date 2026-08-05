@@ -4,20 +4,22 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: 'Release version (e.g., 1.0.0)'
+        description: 'Release version (e.g., 2.0.0)'
         required: true
       build_type:
         type: choice
-        description: 'The build configuration (e.g., Release)'
+        description: 'Build configuration'
         required: true
-        options: 
-        - Release
-        - Debug
+        options:
+          - Release
+          - Debug
+
+permissions:
+  contents: write
 
 jobs:
   build-windows:
-    runs-on: ubuntu-latest
-
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,30 +34,14 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore FikaHeadlessManager.csproj
 
-      - name: Publish Windows build (framework-dependent single file)
-        run: |
-          dotnet publish FikaHeadlessManager.csproj \
-            --configuration ${{ inputs.build_type }} \
-            --no-restore \
-            --runtime win-x64 \
-            --output output/windows/ \
-            -p:PublishSingleFile=true \
-            -p:SelfContained=false \
-            -p:DebugType=None \
-            -p:DebugSymbols=false \
-            -p:PublishTrimmed=false \
-            -p:Version=${{ inputs.release_version }} \
-            -p:AssemblyVersion=${{ inputs.release_version }} \
-            -p:FileVersion=${{ inputs.release_version }} \
-            -p:InformationalVersion=${{ inputs.release_version }}
+      - name: Publish Windows build
+        run: dotnet publish FikaHeadlessManager.csproj --configuration ${{ inputs.build_type }} --no-restore --runtime win-x64 --output output/windows/ -p:PublishSingleFile=true -p:SelfContained=false -p:DebugType=None -p:DebugSymbols=false -p:PublishTrimmed=false -p:Version=${{ inputs.release_version }} -p:AssemblyVersion=${{ inputs.release_version }} -p:FileVersion=${{ inputs.release_version }} -p:InformationalVersion=${{ inputs.release_version }}
 
       - name: Copy license
-        run: cp LICENSE.md output/windows/FikaHeadlessManager-LICENSE.md
+        run: Copy-Item LICENSE.md output/windows/FikaHeadlessManager-LICENSE.md
 
       - name: Zip Windows build
-        run: |
-          cd output/windows
-          zip -r "../../Fika Headless Manager ${{ inputs.release_version }}.zip" .
+        run: Compress-Archive -Path "output/windows/*" -DestinationPath "Fika Headless Manager ${{ inputs.release_version }}.zip"
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -63,59 +49,8 @@ jobs:
           name: Fika Headless Manager ${{ inputs.release_version }}
           path: Fika Headless Manager ${{ inputs.release_version }}.zip
 
-  build-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        runtime: [linux-x64]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-          cache: true
-          cache-dependency-path: 'packages.lock.json'
-
-      - name: Restore dependencies
-        run: dotnet restore FikaHeadlessManager.csproj --runtime ${{ matrix.runtime }}
-
-      - name: Publish Linux build (framework-dependent single file)
-        run: |
-          dotnet publish FikaHeadlessManager.csproj \
-            --configuration ${{ inputs.build_type }} \
-            --no-restore \
-            --runtime ${{ matrix.runtime }} \
-            --output output/${{ matrix.runtime }}/ \
-            -p:PublishSingleFile=true \
-            -p:SelfContained=false \
-            -p:DebugType=None \
-            -p:DebugSymbols=false \
-            -p:PublishTrimmed=false \
-            -p:Version=${{ inputs.release_version }} \
-            -p:AssemblyVersion=${{ inputs.release_version }} \
-            -p:FileVersion=${{ inputs.release_version }} \
-            -p:InformationalVersion=${{ inputs.release_version }}
-
-      - name: Copy license
-        run: cp LICENSE.md output/${{ matrix.runtime }}/FikaHeadlessManager-LICENSE.md
-
-      - name: Tar Linux build
-        run: |
-          cd output/${{ matrix.runtime }}
-          tar -czf "../../Fika Headless Manager ${{ inputs.release_version }}-${{ matrix.runtime }}.tar.gz" *
-
-      - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Fika Headless Manager ${{ inputs.release_version }}-${{ matrix.runtime }}
-          path: Fika Headless Manager ${{ inputs.release_version }}-${{ matrix.runtime }}.tar.gz
-
   release:
-    needs: [build-windows, build-linux]
+    needs: [build-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -126,11 +61,9 @@ jobs:
       - name: Create GitHub Release Draft
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.release_tag }}
+          tag_name: v${{ inputs.release_version }}
           name: Fika Headless Manager ${{ inputs.release_version }}
           draft: true
-          files: |
-            releases/**/*.zip
-            releases/**/*.tar.gz
+          files: releases/**/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
