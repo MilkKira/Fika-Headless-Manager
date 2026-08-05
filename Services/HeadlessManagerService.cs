@@ -14,6 +14,7 @@ namespace FikaHeadlessManager.Services;
 public sealed class HeadlessManagerService : IAsyncDisposable
 {
     private const int HideWindow = 0;
+    private const string ReadyMessage = "[Message:Fika.HeadlessWebSocket] Connected to HeadlessWebSocket";
     private readonly Dictionary<Guid, ManagedProcess> _processes = [];
     private readonly HttpClient _httpClient;
     private readonly SynchronizationContext? _synchronizationContext;
@@ -38,12 +39,6 @@ public sealed class HeadlessManagerService : IAsyncDisposable
 
     /// <summary>Occurs when output is captured for a managed headless client.</summary>
     public event EventHandler<ProcessLogEntry>? LogReceived;
-
-    /// <summary>Gets the number of successful process starts in the current application session.</summary>
-    public int SuccessfulStarts { get; private set; }
-
-    /// <summary>Gets the number of failed process starts in the current application session.</summary>
-    public int FailedStarts { get; private set; }
 
     /// <summary>Validates and starts a profile without displaying console windows.</summary>
     /// <param name="profile">The profile to start.</param>
@@ -100,14 +95,14 @@ public sealed class HeadlessManagerService : IAsyncDisposable
             {
                 if (args.Data is not null)
                 {
-                    RaiseLog(profile, "标准输出", args.Data);
+                    RaiseLog(profile, "标准输出", "标准输出", args.Data);
                 }
             };
             process.ErrorDataReceived += (_, args) =>
             {
                 if (args.Data is not null)
                 {
-                    RaiseLog(profile, "错误输出", args.Data);
+                    RaiseLog(profile, "标准输出", "错误输出", args.Data, "错误");
                 }
             };
 
@@ -129,18 +124,19 @@ public sealed class HeadlessManagerService : IAsyncDisposable
 
             var cancellation = new CancellationTokenSource();
             _processes[profile.Id] = new ManagedProcess(process, cancellation, withGraphics, normalizedInstallDirectory);
+            process.PriorityClass = ProcessPriorityClass.High;
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
             profile.ProcessId = process.Id;
-            profile.StartedAt = DateTimeOffset.Now;
-            profile.Status = "Running";
-            SuccessfulStarts++;
-            ReportManagerMessage(profile, $"无头客户端已启动（进程 ID：{process.Id}）。");
+            profile.StartedAt = null;
+            profile.Status = "Connecting";
+            ReportManagerMessage(profile, $"无头进程已创建（进程 ID：{process.Id}），CPU 优先级已设为高，正在等待 WebSocket 连接。");
             _ = HideWindowsLoopAsync(process, withGraphics, cancellation.Token);
             _ = TailLogFileAsync(
                 profile,
                 Path.Combine(profile.InstallDirectory, "BepInEx", "LogOutput.log"),
+                "BepInEx",
                 "BepInEx",
                 cancellation.Token);
             if (profile.ExtraLogging)
@@ -148,6 +144,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
                 _ = TailLogFileAsync(
                     profile,
                     Path.Combine(profile.InstallDirectory, "Headless.log"),
+                    "标准输出",
                     "Headless",
                     cancellation.Token);
             }
@@ -176,9 +173,17 @@ public sealed class HeadlessManagerService : IAsyncDisposable
 
             profile.Status = "Error";
             profile.ProcessId = null;
-            FailedStarts++;
-            ReportManagerMessage(profile, exception.Message);
+            ReportManagerMessage(profile, exception.Message, "错误");
         }
+    }
+
+    /// <summary>Stops and starts a managed profile again.</summary>
+    /// <param name="profile">The profile to restart.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task RestartAsync(ManagerProfile profile)
+    {
+        await StopAsync(profile);
+        await StartAsync(profile);
     }
 
     /// <summary>Stops a running profile and its child processes.</summary>
@@ -264,8 +269,15 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         managed.Cancellation.Dispose();
         profile.ProcessId = null;
         profile.StartedAt = null;
-        profile.Status = "Stopped";
-        ReportManagerMessage(profile, $"无头客户端已退出，退出代码：{exitCode}。");
+        profile.Status = managed.IsReady ? "Stopped" : "Error";
+        if (managed.IsReady)
+        {
+            ReportManagerMessage(profile, $"无头客户端已退出，退出代码：{exitCode}。", exitCode == 0 ? "信息" : "错误");
+        }
+        else
+        {
+            ReportManagerMessage(profile, $"无头客户端在 WebSocket 连接成功前退出，退出代码：{exitCode}。", "错误");
+        }
 
         if (!_isDisposing && profile.AutoRestart)
         {
@@ -392,10 +404,12 @@ public sealed class HeadlessManagerService : IAsyncDisposable
     private async Task TailLogFileAsync(
         ManagerProfile profile,
         string logPath,
+        string category,
         string source,
         CancellationToken cancellationToken)
     {
         long position = 0;
+        var pendingText = string.Empty;
         try
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -414,6 +428,7 @@ public sealed class HeadlessManagerService : IAsyncDisposable
                         if (stream.Length < position)
                         {
                             position = 0;
+                            pendingText = string.Empty;
                         }
 
                         stream.Position = position;
@@ -427,7 +442,18 @@ public sealed class HeadlessManagerService : IAsyncDisposable
                         position = stream.Position;
                         if (!string.IsNullOrEmpty(text))
                         {
-                            RaiseLog(profile, source, text.TrimEnd('\r', '\n'));
+                            var combined = pendingText + text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+                            var lines = combined.Split('\n');
+                            var completeLineCount = combined.EndsWith('\n') ? lines.Length : lines.Length - 1;
+                            for (var index = 0; index < completeLineCount; index++)
+                            {
+                                if (!string.IsNullOrEmpty(lines[index]))
+                                {
+                                    RaiseLog(profile, category, source, lines[index]);
+                                }
+                            }
+
+                            pendingText = combined.EndsWith('\n') ? string.Empty : lines[^1];
                         }
                     }
                 }
@@ -447,23 +473,100 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         {
             // Normal process shutdown path.
         }
+
+        if (!string.IsNullOrEmpty(pendingText))
+        {
+            RaiseLog(profile, category, source, pendingText);
+        }
     }
 
-    private void ReportManagerMessage(ManagerProfile profile, string message)
+    private void ReportManagerMessage(ManagerProfile profile, string message, string level = "信息")
     {
         StateChanged?.Invoke(this, EventArgs.Empty);
-        RaiseLog(profile, "管理器", message);
+        RaiseLog(profile, "标准输出", "管理器", message, level);
     }
 
-    private void RaiseLog(ManagerProfile profile, string source, string message) =>
+    private void RaiseLog(
+        ManagerProfile profile,
+        string category,
+        string source,
+        string message,
+        string? level = null)
+    {
         LogReceived?.Invoke(this, new ProcessLogEntry
         {
             ProfileId = profile.Id,
             ManagerName = profile.Name,
             Timestamp = DateTimeOffset.Now,
             Source = source,
+            Category = category,
+            Level = level ?? DetectLevel(message),
             Message = message
         });
+
+        if (IsReadyMessage(message))
+        {
+            MarkProfileReady(profile);
+        }
+    }
+
+    private static bool IsReadyMessage(string message) =>
+        message.Contains(ReadyMessage, StringComparison.Ordinal);
+
+    private void MarkProfileReady(ManagerProfile profile)
+    {
+        void MarkReady()
+        {
+            if (!_processes.TryGetValue(profile.Id, out var managed) || managed.IsReady)
+            {
+                return;
+            }
+
+            managed.IsReady = true;
+            profile.Status = "Running";
+            profile.StartedAt = DateTimeOffset.Now;
+            ReportManagerMessage(profile, "HeadlessWebSocket 已连接，实例启动成功。", "消息");
+        }
+
+        if (_synchronizationContext is not null)
+        {
+            _synchronizationContext.Post(_ => MarkReady(), null);
+        }
+        else
+        {
+            MarkReady();
+        }
+    }
+
+    private static string DetectLevel(string message)
+    {
+        if (message.StartsWith("[Fatal", StringComparison.OrdinalIgnoreCase))
+        {
+            return "致命";
+        }
+
+        if (message.StartsWith("[Error", StringComparison.OrdinalIgnoreCase))
+        {
+            return "错误";
+        }
+
+        if (message.StartsWith("[Warning", StringComparison.OrdinalIgnoreCase))
+        {
+            return "警告";
+        }
+
+        if (message.StartsWith("[Debug", StringComparison.OrdinalIgnoreCase))
+        {
+            return "调试";
+        }
+
+        if (message.StartsWith("[Message", StringComparison.OrdinalIgnoreCase))
+        {
+            return "消息";
+        }
+
+        return "信息";
+    }
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -485,5 +588,9 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         Process Process,
         CancellationTokenSource Cancellation,
         bool WithGraphics,
-        string InstallDirectory);
+        string InstallDirectory)
+    {
+        /// <summary>Gets or sets a value that indicates whether the WebSocket ready marker was observed.</summary>
+        public bool IsReady { get; set; }
+    }
 }

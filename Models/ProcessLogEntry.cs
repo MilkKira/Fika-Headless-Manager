@@ -17,6 +17,12 @@ public sealed record ProcessLogEntry
     /// <summary>Gets the output source, such as manager, stdout, stderr, or BepInEx.</summary>
     public required string Source { get; init; }
 
+    /// <summary>Gets the major output category used for filtering.</summary>
+    public required string Category { get; init; }
+
+    /// <summary>Gets the detected output severity level.</summary>
+    public required string Level { get; init; }
+
     /// <summary>Gets the captured output text.</summary>
     public required string Message { get; init; }
 }

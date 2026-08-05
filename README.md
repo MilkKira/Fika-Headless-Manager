@@ -4,12 +4,14 @@ Fika 无头管理器是一款 Windows 桌面控制程序，可在一个窗口中
 
 ## 功能
 
-- 单窗口 WPF 仪表盘，包含固定侧栏、运行指标、实时趋势图和实例管理表格。
+- 单窗口 WPF 仪表盘，包含固定侧栏、实例数量、活跃会话和实例管理表格。
 - 新增、编辑、移除、启动和停止多个 SPT/Fika 无头实例。
-- 通过每个实例旁的“查看”按钮，在程序内部实时查看管理器输出、标准输出、错误输出、`BepInEx/LogOutput.log` 和可选的 `Headless.log`。
+- 通过每个实例旁的“查看”按钮，在程序内部实时查看管理器输出、标准输出、错误输出、`BepInEx/LogOutput.log` 和可选的 `Headless.log`，并按来源和日志级别组合筛选。
+- 捕获到 `[Message:Fika.HeadlessWebSocket] Connected to HeadlessWebSocket` 后，才将实例标记为启动成功和“运行中”。
+- 支持单实例手动重启以及异常退出后的自动重启。
+- 每次启动 Headless 进程时，将 Windows CPU 进程优先级设置为“高”。
 - 一键启动或停止全部已配置实例。
 - 启动前验证 `EscapeFromTarkov.exe`、`Fika.Headless.dll` 和 Fika 后端服务。
-- 无头客户端意外退出后自动重启。
 - 管理器采用 Windows GUI 模式运行，不显示自身控制台窗口。
 - 使用 `CreateNoWindow`、`--enable-console false` 和 Win32 窗口监控隐藏子进程及 BepInEx 控制台。
 - 首次在 SPT 目录中运行时，自动导入旧版 `HeadlessConfig.json`。

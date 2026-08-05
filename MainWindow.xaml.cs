@@ -23,11 +23,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly Dictionary<Guid, Queue<ProcessLogEntry>> _logsByProfile = [];
     private ManagerProfile? _editingProfile;
     private Guid? _viewedLogProfileId;
-    private IReadOnlyList<double> _trendValues = new double[] { 0 };
-    private IReadOnlyList<double> _comparisonValues = new double[] { 0, 0, 0, 0 };
     private bool _allowClose;
     private string _users = "0";
-    private string _conversionRate = "—";
     private string _activeSessions = "0";
 
     /// <summary>
@@ -40,7 +37,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _managerService.StateChanged += ManagerService_StateChanged;
         _managerService.LogReceived += ManagerService_LogReceived;
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-        _refreshTimer.Tick += (_, _) => RefreshDashboard(addTrendSample: true);
+        _refreshTimer.Tick += (_, _) => RefreshDashboard();
         Loaded += MainWindow_Loaded;
     }
 
@@ -57,36 +54,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => SetField(ref _users, value);
     }
 
-    /// <summary>Gets the successful-start conversion rate.</summary>
-    public string ConversionRate
-    {
-        get => _conversionRate;
-        private set => SetField(ref _conversionRate, value);
-    }
-
     /// <summary>Gets the active headless session count.</summary>
     public string ActiveSessions
     {
         get => _activeSessions;
         private set => SetField(ref _activeSessions, value);
     }
-
-    /// <summary>Gets the sampled active-session trend values.</summary>
-    public IReadOnlyList<double> TrendValues
-    {
-        get => _trendValues;
-        private set => SetField(ref _trendValues, value);
-    }
-
-    /// <summary>Gets the current lifecycle comparison values.</summary>
-    public IReadOnlyList<double> ComparisonValues
-    {
-        get => _comparisonValues;
-        private set => SetField(ref _comparisonValues, value);
-    }
-
-    /// <summary>Gets the lifecycle comparison labels.</summary>
-    public IReadOnlyList<string> ComparisonLabels { get; } = new[] { "启动成功", "启动失败", "运行中", "已停止" };
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
@@ -113,8 +86,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ShowError($"无法加载已保存的实例：{exception.Message}");
         }
 
-        RefreshDashboard(addTrendSample: true);
-        ApplyResponsiveLayout(ActualWidth);
+        RefreshDashboard();
         _refreshTimer.Start();
     }
 
@@ -126,7 +98,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        RefreshDashboard(addTrendSample: false);
+        RefreshDashboard();
+        if (_viewedLogProfileId is Guid profileId)
+        {
+            var profile = Profiles.FirstOrDefault(item => item.Id == profileId);
+            if (profile is not null)
+            {
+                UpdateLogViewerSubtitle(profile);
+            }
+        }
     }
 
     private void ManagerService_LogReceived(object? sender, ProcessLogEntry entry)
@@ -149,34 +129,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             entries.Dequeue();
         }
 
-        if (_viewedLogProfileId == entry.ProfileId && LogOverlay.Visibility == Visibility.Visible)
+        if (_viewedLogProfileId == entry.ProfileId &&
+            LogOverlay.Visibility == Visibility.Visible &&
+            MatchesLogFilter(entry))
         {
             AppendLogText(FormatLogEntry(entry));
         }
     }
 
-    private void RefreshDashboard(bool addTrendSample)
+    private void RefreshDashboard()
     {
         var running = Profiles.Count(profile => profile.Status == "Running");
-        var stopped = Profiles.Count(profile => profile.Status == "Stopped");
-        var attempts = _managerService.SuccessfulStarts + _managerService.FailedStarts;
         Users = Profiles.Count.ToString();
         ActiveSessions = running.ToString();
-        ConversionRate = attempts == 0
-            ? "—"
-            : ((double)_managerService.SuccessfulStarts / attempts).ToString("P0");
-        ComparisonValues = new double[]
-        {
-            _managerService.SuccessfulStarts,
-            _managerService.FailedStarts,
-            running,
-            stopped
-        };
-
-        if (addTrendSample)
-        {
-            TrendValues = TrendValues.Append((double)running).TakeLast(13).ToArray();
-        }
 
         foreach (var profile in Profiles)
         {
@@ -211,28 +176,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _viewedLogProfileId = profile.Id;
         LogViewerTitle.Text = $"{profile.Name} · 实时输出";
-        LogViewerSubtitle.Text = profile.ProcessId is null
-            ? $"状态：{profile.StatusDisplay} · 当前无活动进程"
-            : $"状态：{profile.StatusDisplay} · 进程 ID {profile.ProcessId}";
-        LogOutputTextBox.Clear();
-
-        if (_logsByProfile.TryGetValue(profile.Id, out var entries) && entries.Count > 0)
-        {
-            LogOutputTextBox.Text = string.Concat(entries.Select(FormatLogEntry));
-            LogOutputTextBox.ScrollToEnd();
-        }
-        else
-        {
-            LogOutputTextBox.Text = "暂无实时输出。启动该实例后将在这里显示日志。\r\n";
-        }
-
+        UpdateLogViewerSubtitle(profile);
         LogOverlay.Visibility = Visibility.Visible;
+        RefreshLogView();
     }
 
     private void CloseLog_Click(object sender, RoutedEventArgs e)
     {
         LogOverlay.Visibility = Visibility.Collapsed;
         _viewedLogProfileId = null;
+    }
+
+    private void LogFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (IsInitialized && LogOutputTextBox is not null && LogOverlay.Visibility == Visibility.Visible)
+        {
+            RefreshLogView();
+        }
     }
 
     private async void StartAll_Click(object sender, RoutedEventArgs e)
@@ -248,6 +208,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         foreach (var profile in Profiles.ToArray())
         {
             await _managerService.StopAsync(profile);
+        }
+    }
+
+    private async void RestartManager_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is ManagerProfile profile)
+        {
+            await _managerService.RestartAsync(profile);
         }
     }
 
@@ -326,7 +294,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         await SaveProfilesAsync();
         EditorOverlay.Visibility = Visibility.Collapsed;
-        RefreshDashboard(addTrendSample: false);
+        RefreshDashboard();
     }
 
     private async void RemoveManager_Click(object sender, RoutedEventArgs e)
@@ -345,7 +313,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Profiles.Remove(profile);
         _logsByProfile.Remove(profile.Id);
         await SaveProfilesAsync();
-        RefreshDashboard(addTrendSample: false);
+        RefreshDashboard();
     }
 
     private void Browse_Click(object sender, RoutedEventArgs e)
@@ -362,38 +330,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private void CancelEditor_Click(object sender, RoutedEventArgs e) => EditorOverlay.Visibility = Visibility.Collapsed;
-
-    private void Window_SizeChanged(object sender, SizeChangedEventArgs e) => ApplyResponsiveLayout(e.NewSize.Width);
-
-    private void ApplyResponsiveLayout(double windowWidth)
-    {
-        var compact = windowWidth < 1240;
-        KpiGrid.RowDefinitions[1].Height = compact ? GridLength.Auto : new GridLength(0);
-        SetCardLayout(UsersCard, 0, 0, compact ? new Thickness(0, 0, 8, 8) : new Thickness(0, 0, 8, 0));
-        SetCardLayout(ConversionCard, 0, 1, compact ? new Thickness(8, 0, 0, 8) : new Thickness(8, 0, 8, 0));
-        SetCardLayout(SessionsCard, compact ? 1 : 0, compact ? 0 : 2, compact ? new Thickness(0, 8, 0, 0) : new Thickness(8, 0, 0, 0));
-        Grid.SetColumnSpan(SessionsCard, compact ? 2 : 1);
-
-        var stackCharts = windowWidth < 1100;
-        ChartsGrid.ColumnDefinitions[0].Width = stackCharts ? new GridLength(1, GridUnitType.Star) : new GridLength(2, GridUnitType.Star);
-        ChartsGrid.ColumnDefinitions[1].Width = stackCharts ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
-        Grid.SetRow(TrendCard, 0);
-        Grid.SetColumn(TrendCard, 0);
-        Grid.SetColumnSpan(TrendCard, stackCharts ? 2 : 1);
-        TrendCard.Margin = stackCharts ? new Thickness(0, 0, 0, 10) : new Thickness(0, 0, 10, 0);
-        Grid.SetRow(ComparisonCard, stackCharts ? 1 : 0);
-        Grid.SetColumn(ComparisonCard, stackCharts ? 0 : 1);
-        Grid.SetColumnSpan(ComparisonCard, stackCharts ? 2 : 1);
-        ComparisonCard.Margin = stackCharts ? new Thickness(0, 10, 0, 0) : new Thickness(10, 0, 0, 0);
-    }
-
-    private static void SetCardLayout(FrameworkElement card, int row, int column, Thickness margin)
-    {
-        Grid.SetRow(card, row);
-        Grid.SetColumn(card, column);
-        Grid.SetColumnSpan(card, 1);
-        card.Margin = margin;
-    }
 
     private string? ValidateEditor()
     {
@@ -464,10 +400,61 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         };
     }
 
+    private void RefreshLogView()
+    {
+        LogOutputTextBox.Clear();
+        if (_viewedLogProfileId is not Guid profileId ||
+            !_logsByProfile.TryGetValue(profileId, out var entries))
+        {
+            LogOutputTextBox.Text = "暂无实时输出。启动该实例后将在这里显示日志。\r\n";
+            return;
+        }
+
+        var filteredEntries = entries.Where(MatchesLogFilter).ToArray();
+        if (filteredEntries.Length == 0)
+        {
+            LogOutputTextBox.Text = "当前筛选条件下暂无实时输出。\r\n";
+            return;
+        }
+
+        LogOutputTextBox.Text = string.Concat(filteredEntries.Select(FormatLogEntry));
+        LogOutputTextBox.ScrollToEnd();
+    }
+
+    private void UpdateLogViewerSubtitle(ManagerProfile profile)
+    {
+        LogViewerSubtitle.Text = profile.ProcessId is null
+            ? $"状态：{profile.StatusDisplay} · 当前无活动进程"
+            : $"状态：{profile.StatusDisplay} · 进程 ID {profile.ProcessId}";
+    }
+
+    private bool MatchesLogFilter(ProcessLogEntry entry)
+    {
+        var categoryMatches = LogCategoryFilter.SelectedIndex switch
+        {
+            1 => entry.Category == "标准输出",
+            2 => entry.Category == "BepInEx",
+            _ => true
+        };
+
+        var selectedLevel = LogLevelFilter.SelectedIndex switch
+        {
+            1 => "消息",
+            2 => "信息",
+            3 => "警告",
+            4 => "错误",
+            5 => "调试",
+            6 => "致命",
+            _ => null
+        };
+        return categoryMatches && (selectedLevel is null || entry.Level == selectedLevel);
+    }
+
     private void AppendLogText(string text)
     {
         const int maximumCharacters = 2_000_000;
-        if (LogOutputTextBox.Text.StartsWith("暂无实时输出。", StringComparison.Ordinal))
+        if (LogOutputTextBox.Text.StartsWith("暂无实时输出。", StringComparison.Ordinal) ||
+            LogOutputTextBox.Text.StartsWith("当前筛选条件下暂无实时输出。", StringComparison.Ordinal))
         {
             LogOutputTextBox.Clear();
         }
@@ -483,7 +470,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static string FormatLogEntry(ProcessLogEntry entry)
     {
-        var prefix = $"{entry.Timestamp.LocalDateTime:HH:mm:ss.fff} [{entry.Source}] ";
+        var prefix = $"{entry.Timestamp.LocalDateTime:HH:mm:ss.fff} [{entry.Category}/{entry.Level}/{entry.Source}] ";
         var normalized = entry.Message.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
         var lines = normalized.Split('\n');
         return string.Join(

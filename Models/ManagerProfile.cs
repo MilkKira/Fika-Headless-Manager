@@ -59,6 +59,7 @@ public sealed class ManagerProfile : INotifyPropertyChanged
     public string StatusDisplay => Status switch
     {
         "Starting" => "启动中",
+        "Connecting" => "等待连接",
         "Running" => "运行中",
         "Stopping" => "停止中",
         "Restarting" => "重启中",
