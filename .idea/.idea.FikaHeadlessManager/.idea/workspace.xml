@@ -15,8 +15,14 @@
   <component name="ChangeListManager">
     <list default="true" id="1acf0fe1-30bc-4396-a382-627a4a10a3f0" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.FikaHeadlessManager/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.FikaHeadlessManager/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MainWindow.xaml" beforeDir="false" afterPath="$PROJECT_DIR$/MainWindow.xaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Models/ManagerProfile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Models/ManagerProfile.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/App.xaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/App.xaml.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/FikaHeadlessManager.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/FikaHeadlessManager.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MainWindow.xaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/MainWindow.xaml.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages.lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages.lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/publish-single-framework/FikaHeadlessManager.exe" beforeDir="false" afterPath="$PROJECT_DIR$/publish-single-framework/FikaHeadlessManager.exe" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,12 +51,13 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "cidr.known.project.marker": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "ReaLTaiizor",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -87,6 +94,7 @@
       <workItem from="1785900961012" duration="28000" />
       <workItem from="1785905981927" duration="122000" />
       <workItem from="1785906514944" duration="441000" />
+      <workItem from="1785914271708" duration="359000" />
     </task>
     <servers />
   </component>

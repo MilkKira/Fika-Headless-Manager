@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -15,5 +15,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="FIKA_TOOLS_LOGO.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ReaLTaiizor" Version="3.8.2.1" />
   </ItemGroup>
 </Project>
