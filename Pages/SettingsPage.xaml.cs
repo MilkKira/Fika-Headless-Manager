@@ -150,7 +150,7 @@ public partial class SettingsPage : Page
         }
 
         var dark = ReferenceEquals(radio, DarkThemeRadio);
-        ApplicationThemeManager.Apply(dark ? ApplicationTheme.Dark : ApplicationTheme.Light);
+        App.ApplyTheme(dark ? ApplicationTheme.Dark : ApplicationTheme.Light);
         await SaveThemeAsync(dark ? "Dark" : "Light");
     }
 

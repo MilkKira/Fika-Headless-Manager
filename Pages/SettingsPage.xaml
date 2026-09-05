@@ -2,6 +2,7 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
       Title="设置"
       Loaded="SettingsPage_Loaded">
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -28,14 +29,14 @@
                         </Border>
                         <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="外观主题" Style="{StaticResource SettingsCardTitleStyle}"/>
-                            <TextBlock Text="选择浅色或深色显示模式，下次启动时自动恢复。"
+                            <TextBlock Text="似白虹饮涧，玉龙下山，晴雪飞滩。"
                                        Style="{StaticResource SettingsCardDescriptionStyle}"/>
                         </StackPanel>
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,18,0,0">
                         <RadioButton x:Name="LightThemeRadio" GroupName="AppTheme"
-                                     Content="浅色" Tag="Light" IsChecked="True"
+                                     Content="浅色" Tag="Light"
                                      Checked="ThemeRadio_Checked"/>
                         <RadioButton x:Name="DarkThemeRadio" GroupName="AppTheme"
                                      Content="深色" Tag="Dark" Margin="24,0,0,0"
@@ -90,7 +91,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                             <TextBlock Text="自行唤起无头主机" FontWeight="SemiBold"/>
-                            <TextBlock Text="启动后等待 5 秒，探测并通过 SPT 服务端后自动启动全部无头主机。"
+                            <TextBlock Text="启动后等待 5 秒，Ping通对应主机后自动启动全部无头主机。"
                                        FontSize="12" TextWrapping="Wrap"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                        Margin="0,4,0,0"/>
@@ -121,7 +122,7 @@
                         </Border>
                         <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="关于" Style="{StaticResource SettingsCardTitleStyle}"/>
-                            <TextBlock Text="程序版本、运行环境与许可信息。"
+                            <TextBlock Text="满目山河空念远，落花风雨更伤春。不如怜取眼前人。"
                                        Style="{StaticResource SettingsCardDescriptionStyle}"/>
                         </StackPanel>
                     </StackPanel>
@@ -140,7 +141,7 @@
                         </Border>
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Fika 无头管理器" FontSize="18" FontWeight="SemiBold"/>
-                            <TextBlock Text="在一个窗口中监控并控制多个 Fika 无头客户端。"
+                            <TextBlock Text="出门搔白首，若负平生志。"
                                        FontSize="12" TextWrapping="Wrap"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                        Margin="0,4,0,0"/>
@@ -165,7 +166,7 @@
                                            Margin="0,8,0,0"/>
                                 <TextBlock Grid.Row="2" Grid.Column="1" x:Name="OperatingSystemValueText" Margin="0,8,0,0"/>
                             </Grid>
-                            <TextBlock Text="MIT License · Copyright (c) 2026 Lacyway"
+                            <TextBlock Text="MIT License · Copyright (c) 2026 Mochix2Milk And Lacyway"
                                        FontSize="12"
                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                        Margin="0,16,0,0"/>
