@@ -1,5 +1,6 @@
 using FikaHeadlessManager.Models;
 using FikaHeadlessManager.Services;
+using Microsoft.Win32;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,8 +13,11 @@ namespace FikaHeadlessManager.Pages;
 /// </summary>
 public partial class SettingsPage : Page
 {
+    private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
+    private const string AutoStartValueName = "FikaHeadlessManager";
     private readonly AppSettingsStore _settingsStore = new();
     private bool _suppressThemeEvents;
+    private bool _suppressAutoStartEvents;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsPage"/> class.
@@ -27,6 +31,72 @@ public partial class SettingsPage : Page
     {
         UpdateVersionInformation();
         ApplyThemeSelection(ApplicationThemeManager.GetAppTheme());
+        ApplyAutoStartState();
+    }
+
+    private void ApplyAutoStartState()
+    {
+        _suppressAutoStartEvents = true;
+        AutoStartToggle.IsChecked = IsAutoStartEnabled();
+        _suppressAutoStartEvents = false;
+    }
+
+    private void AutoStartToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressAutoStartEvents)
+        {
+            return;
+        }
+
+        try
+        {
+            SetAutoStart(AutoStartToggle.IsChecked == true);
+        }
+        catch (Exception exception)
+        {
+            ApplyAutoStartState();
+            var owner = Window.GetWindow(this);
+            var message = $"无法修改开机自启动设置：{exception.Message}";
+            if (owner is not null)
+            {
+                MessageBox.Show(owner, message, "Fika 无头管理器", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            else
+            {
+                MessageBox.Show(message, "Fika 无头管理器", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+    }
+
+    private static bool IsAutoStartEnabled()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, false);
+            return key?.GetValue(AutoStartValueName) is string value && !string.IsNullOrWhiteSpace(value);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void SetAutoStart(bool enable)
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath, true);
+        if (!enable)
+        {
+            key.DeleteValue(AutoStartValueName, false);
+            return;
+        }
+
+        var executablePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(executablePath))
+        {
+            throw new InvalidOperationException("无法确定当前可执行文件路径。");
+        }
+
+        key.SetValue(AutoStartValueName, $"\"{executablePath}\"");
     }
 
     private async void ThemeRadio_Checked(object sender, RoutedEventArgs e)
