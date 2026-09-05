@@ -43,8 +43,68 @@
                     </StackPanel>
                 </Grid>
             </Border>
-
-            <TextBlock Text="程序信息" Style="{StaticResource SettingsSectionLabelStyle}" Margin="0,24,0,8"/>
+            
+            <TextBlock Text="高级" Style="{StaticResource SettingsSectionLabelStyle}" Margin="0,24,0,8"/>
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="40" Height="40" CornerRadius="10"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                            <ui:SymbolIcon Symbol="Rocket24" FontSize="18"
+                                           Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="高级设置" Style="{StaticResource SettingsCardTitleStyle}"/>
+                            <TextBlock Text="控制与系统启动相关的行为。"
+                                       Style="{StaticResource SettingsCardDescriptionStyle}"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <Grid Grid.Row="1" Margin="0,18,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Text="开机自启动" FontWeight="SemiBold"/>
+                            <TextBlock Text="登录 Windows 时自动启动 Fika 无头管理器。"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" x:Name="AutoStartToggle"
+                                         OnContent="开" OffContent="关"
+                                         VerticalAlignment="Center"
+                                         Checked="AutoStartToggle_Toggled"
+                                         Unchecked="AutoStartToggle_Toggled"/>
+                    </Grid>
+                    <Grid Grid.Row="2" Margin="0,18,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Text="自行唤起无头主机" FontWeight="SemiBold"/>
+                            <TextBlock Text="启动后等待 5 秒，探测并通过 SPT 服务端后自动启动全部无头主机。"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" x:Name="AutoWakeToggle"
+                                         OnContent="开" OffContent="关"
+                                         VerticalAlignment="Center"
+                                         Checked="AutoWakeToggle_Toggled"
+                                         Unchecked="AutoWakeToggle_Toggled"/>
+                    </Grid>
+                </Grid>
+            </Border>
+            
+                        <TextBlock Text="程序信息" Style="{StaticResource SettingsSectionLabelStyle}" Margin="0,24,0,8"/>
             <Border Style="{StaticResource SettingsCardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -60,7 +120,7 @@
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="关于 Fika 无头管理器" Style="{StaticResource SettingsCardTitleStyle}"/>
+                            <TextBlock Text="关于" Style="{StaticResource SettingsCardTitleStyle}"/>
                             <TextBlock Text="程序版本、运行环境与许可信息。"
                                        Style="{StaticResource SettingsCardDescriptionStyle}"/>
                         </StackPanel>
@@ -113,47 +173,7 @@
                     </Grid>
                 </Grid>
             </Border>
-
-            <TextBlock Text="高级" Style="{StaticResource SettingsSectionLabelStyle}" Margin="0,24,0,8"/>
-            <Border Style="{StaticResource SettingsCardStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal">
-                        <Border Width="40" Height="40" CornerRadius="10"
-                                Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                            <ui:SymbolIcon Symbol="Rocket24" FontSize="18"
-                                           Foreground="{DynamicResource AccentFillColorDefaultBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="高级设置" Style="{StaticResource SettingsCardTitleStyle}"/>
-                            <TextBlock Text="控制与系统启动相关的行为。"
-                                       Style="{StaticResource SettingsCardDescriptionStyle}"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <Grid Grid.Row="1" Margin="0,18,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
-                            <TextBlock Text="开机自启动" FontWeight="SemiBold"/>
-                            <TextBlock Text="登录 Windows 时自动启动 Fika 无头管理器。"
-                                       FontSize="12" TextWrapping="Wrap"
-                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                       Margin="0,4,0,0"/>
-                        </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" x:Name="AutoStartToggle"
-                                         OnContent="开" OffContent="关"
-                                         VerticalAlignment="Center"
-                                         Checked="AutoStartToggle_Toggled"
-                                         Unchecked="AutoStartToggle_Toggled"/>
-                    </Grid>
-                </Grid>
-            </Border>
+            <!-- END -->
         </StackPanel>
     </ScrollViewer>
 </Page>

@@ -18,6 +18,7 @@ public partial class SettingsPage : Page
     private readonly AppSettingsStore _settingsStore = new();
     private bool _suppressThemeEvents;
     private bool _suppressAutoStartEvents;
+    private bool _suppressAutoWakeEvents;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsPage"/> class.
@@ -27,11 +28,53 @@ public partial class SettingsPage : Page
         InitializeComponent();
     }
 
-    private void SettingsPage_Loaded(object sender, RoutedEventArgs e)
+    private async void SettingsPage_Loaded(object sender, RoutedEventArgs e)
     {
         UpdateVersionInformation();
         ApplyThemeSelection(ApplicationThemeManager.GetAppTheme());
         ApplyAutoStartState();
+        await ApplyAutoWakeStateAsync();
+    }
+
+    private async Task ApplyAutoWakeStateAsync()
+    {
+        try
+        {
+            var settings = await _settingsStore.LoadAsync();
+            _suppressAutoWakeEvents = true;
+            AutoWakeToggle.IsChecked = settings?.AutoWake == true;
+            _suppressAutoWakeEvents = false;
+        }
+        catch
+        {
+            _suppressAutoWakeEvents = true;
+            AutoWakeToggle.IsChecked = false;
+            _suppressAutoWakeEvents = false;
+        }
+    }
+
+    private async void AutoWakeToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressAutoWakeEvents)
+        {
+            return;
+        }
+
+        await SaveAutoWakeAsync(AutoWakeToggle.IsChecked == true);
+    }
+
+    private async Task SaveAutoWakeAsync(bool enabled)
+    {
+        try
+        {
+            var settings = await _settingsStore.LoadAsync() ?? new AppSettings();
+            settings.AutoWake = enabled;
+            await _settingsStore.SaveAsync(settings);
+        }
+        catch
+        {
+            // Persisting the auto-wake preference is best-effort.
+        }
     }
 
     private void ApplyAutoStartState()
@@ -130,7 +173,9 @@ public partial class SettingsPage : Page
     {
         try
         {
-            await _settingsStore.SaveAsync(new AppSettings { Theme = theme });
+            var settings = await _settingsStore.LoadAsync() ?? new AppSettings();
+            settings.Theme = theme;
+            await _settingsStore.SaveAsync(settings);
         }
         catch
         {

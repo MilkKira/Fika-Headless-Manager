@@ -32,6 +32,8 @@ public partial class DashboardPage : Page, INotifyPropertyChanged
     private bool _allowClose;
     private bool _closingSubscribed;
     private bool _initialized;
+    private bool _autoWakeTriggered;
+    private bool _wakeRunning;
     private string _users = "0";
     private string _activeSessions = "0";
 
@@ -111,6 +113,23 @@ public partial class DashboardPage : Page, INotifyPropertyChanged
 
         RefreshDashboard();
         _refreshTimer.Start();
+
+        if (!_autoWakeTriggered && Profiles.Count > 0)
+        {
+            _autoWakeTriggered = true;
+            try
+            {
+                var settings = await new AppSettingsStore().LoadAsync();
+                if (settings?.AutoWake == true)
+                {
+                    _ = WakeAllAsync();
+                }
+            }
+            catch
+            {
+                // If the preference cannot be read, default to no auto-wake.
+            }
+        }
     }
 
     private void ManagerService_StateChanged(object? sender, EventArgs e)
@@ -239,6 +258,58 @@ public partial class DashboardPage : Page, INotifyPropertyChanged
         if ((sender as FrameworkElement)?.Tag is ManagerProfile profile)
         {
             await _managerService.RestartAsync(profile);
+        }
+    }
+
+    private async Task WakeAllAsync()
+    {
+        if (_wakeRunning)
+        {
+            return;
+        }
+
+        _wakeRunning = true;
+        try
+        {
+            for (var remaining = 5; remaining > 0 && !_allowClose; remaining--)
+            {
+                LastUpdatedText.Text = $"将在 {remaining} 秒后唤起无头主机……";
+                await Task.Delay(1000);
+            }
+
+            if (_allowClose)
+            {
+                return;
+            }
+
+            LastUpdatedText.Text = "正在探测 SPT 服务端 /launcher/ping……";
+            var started = 0;
+            var skipped = 0;
+            foreach (var profile in Profiles.Where(profile => profile.Status is "Stopped" or "Error").ToArray())
+            {
+                if (_allowClose)
+                {
+                    return;
+                }
+
+                LastUpdatedText.Text = $"正在探测 {profile.Name}……";
+                if (await _managerService.PingLauncherAsync(profile.BackendUrl))
+                {
+                    await _managerService.StartAsync(profile);
+                    started++;
+                }
+                else
+                {
+                    skipped++;
+                    _managerService.NotifyManagerMessage(profile, "SPT 服务端未响应 /launcher/ping，已跳过启动。", "警告");
+                }
+            }
+
+            LastUpdatedText.Text = $"唤起完成：启动 {started}，跳过 {skipped}。更新于 {DateTime.Now:HH:mm:ss}";
+        }
+        finally
+        {
+            _wakeRunning = false;
         }
     }
 

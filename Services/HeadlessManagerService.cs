@@ -321,6 +321,39 @@ public sealed class HeadlessManagerService : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Probes the SPT launcher endpoint and checks that it returns the expected <c>pong!</c>.
+    /// </summary>
+    /// <param name="backendUrl">The backend base URL.</param>
+    /// <param name="cancellationToken">A token used to cancel the request.</param>
+    /// <returns><see langword="true"/> when the endpoint responds with <c>pong!</c>.</returns>
+    public async Task<bool> PingLauncherAsync(string backendUrl, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var baseUri = new Uri(backendUrl.EndsWith('/') ? backendUrl : backendUrl + "/");
+            using var response = await _httpClient.GetAsync(new Uri(baseUri, "launcher/ping"), cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var normalized = body.Trim().Trim('"').Trim();
+            return string.Equals(normalized, "pong!", StringComparison.Ordinal);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Emits a manager message for a profile so callers outside the service can surface it.
+    /// </summary>
+    public void NotifyManagerMessage(ManagerProfile profile, string message, string level = "信息") =>
+        ReportManagerMessage(profile, message, level);
+
     private static string BuildArguments(ManagerProfile profile, bool withGraphics)
     {
         var backend = JsonSerializer.Serialize(profile.BackendUrl);
