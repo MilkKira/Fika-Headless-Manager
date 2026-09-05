@@ -17,11 +17,7 @@ public sealed class ConfigurationStore
     /// </summary>
     public ConfigurationStore()
     {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "FikaHeadlessManager");
-        Directory.CreateDirectory(directory);
-        _configurationPath = Path.Combine(directory, "instances.json");
+        _configurationPath = AppDataPath.ForFile("instances.json");
     }
 
     /// <summary>Loads all persisted manager profiles.</summary>

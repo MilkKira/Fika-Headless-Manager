@@ -1,0 +1,118 @@
+<Page x:Class="FikaHeadlessManager.Pages.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="设置"
+      Loaded="SettingsPage_Loaded">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="28,24,28,30" MaxWidth="880">
+            <TextBlock Text="设置" FontSize="28" FontWeight="SemiBold"/>
+            <TextBlock Text="个性化外观并查看程序信息。"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Margin="0,6,0,0"/>
+
+            <TextBlock Text="个性化" Style="{StaticResource SettingsSectionLabelStyle}" Margin="0,30,0,8"/>
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="40" Height="40" CornerRadius="10"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                            <ui:SymbolIcon Symbol="WeatherMoon24" FontSize="18"
+                                           Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="外观主题" Style="{StaticResource SettingsCardTitleStyle}"/>
+                            <TextBlock Text="选择浅色或深色显示模式，下次启动时自动恢复。"
+                                       Style="{StaticResource SettingsCardDescriptionStyle}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,18,0,0">
+                        <RadioButton x:Name="LightThemeRadio" GroupName="AppTheme"
+                                     Content="浅色" Tag="Light" IsChecked="True"
+                                     Checked="ThemeRadio_Checked"/>
+                        <RadioButton x:Name="DarkThemeRadio" GroupName="AppTheme"
+                                     Content="深色" Tag="Dark" Margin="24,0,0,0"
+                                     Checked="ThemeRadio_Checked"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Text="程序信息" Style="{StaticResource SettingsSectionLabelStyle}" Margin="0,24,0,8"/>
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="40" Height="40" CornerRadius="10"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                            <ui:SymbolIcon Symbol="Info24" FontSize="18"
+                                           Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="关于 Fika 无头管理器" Style="{StaticResource SettingsCardTitleStyle}"/>
+                            <TextBlock Text="程序版本、运行环境与许可信息。"
+                                       Style="{StaticResource SettingsCardDescriptionStyle}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Grid Grid.Row="1" Margin="0,20,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="18"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="56" Height="56" CornerRadius="12"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                VerticalAlignment="Top">
+                            <Image Source="/FIKA_TOOLS_LOGO.ico" Width="34" Height="34" Stretch="Uniform"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Fika 无头管理器" FontSize="18" FontWeight="SemiBold"/>
+                            <TextBlock Text="在一个窗口中监控并控制多个 Fika 无头客户端。"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Margin="0,4,0,0"/>
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="72"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="版本" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Grid.Column="1" x:Name="VersionValueText" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Row="1" Text="运行时"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Margin="0,8,0,0"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="RuntimeValueText" Margin="0,8,0,0"/>
+                                <TextBlock Grid.Row="2" Text="操作系统"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Margin="0,8,0,0"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="OperatingSystemValueText" Margin="0,8,0,0"/>
+                            </Grid>
+                            <TextBlock Text="MIT License · Copyright (c) 2026 Lacyway"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Margin="0,16,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
