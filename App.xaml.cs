@@ -19,19 +19,17 @@ public partial class App : Application
         try
         {
             var settings = await new AppSettingsStore().LoadAsync();
-            if (settings is not null)
+            var theme = settings?.Theme switch
             {
-                var theme = settings.Theme switch
-                {
-                    "Dark" => ApplicationTheme.Dark,
-                    _ => ApplicationTheme.Light
-                };
-                ApplicationThemeManager.Apply(theme);
-            }
+                "Light" => ApplicationTheme.Light,
+                _ => ApplicationTheme.Dark
+            };
+            ApplicationThemeManager.Apply(theme);
         }
         catch
         {
-            // Fall back to the theme declared in App.xaml.
+            // Fall back to the default dark theme if settings cannot be read.
+            ApplicationThemeManager.Apply(ApplicationTheme.Dark);
         }
 
         new MainWindow().Show();
